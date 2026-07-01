@@ -1,6 +1,6 @@
 {
   "name": "devcortex",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The cognitive layer for AI coding agents — evidence-backed ship reports, blast-radius protection, and persistent project memory. Works with Claude Code, Codex, Cursor, and any MCP client.",
   "license": "Apache-2.0",
   "type": "module",
