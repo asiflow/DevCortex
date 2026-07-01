@@ -13,7 +13,7 @@
  *   GET /api/memory        -> MemoryItem[]
  *   GET /api/runs          -> RunRecord[]
  *   GET /api/ship-reports  -> { name, markdown }[]
- *   GET /api/ready-score   -> { score, status, passed, blocked, warnings }
+ *   GET /api/ready-score   -> { score, status, passed, blocked, warnings, generatedAt, reportName, stale }
  */
 import {
   DecisionLedger,

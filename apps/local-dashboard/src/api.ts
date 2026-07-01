@@ -38,6 +38,12 @@ export interface ReadyScore {
   passed: number;
   blocked: number;
   warnings: number;
+  /** ISO timestamp of the reflected ship report, or null when none exists. */
+  generatedAt: string | null;
+  /** Filename of the reflected report, or null. */
+  reportName: string | null;
+  /** True when a tracked file changed after the report — the verdict may be stale. */
+  stale: boolean;
 }
 
 /** One recent ship report from GET /api/ship-reports. */

@@ -29,8 +29,30 @@ describe('ShipReadinessPanel', () => {
   });
 
   it('notes when no gate checks have run yet', async () => {
-    stubFetchOnce(makeReadyScore({ score: 0, status: 'NOT_READY', passed: 0, blocked: 0, warnings: 0 }));
+    stubFetchOnce(
+      makeReadyScore({
+        score: 0,
+        status: 'NOT_READY',
+        passed: 0,
+        blocked: 0,
+        warnings: 0,
+        generatedAt: null,
+        reportName: null,
+      }),
+    );
     render(<ShipReadinessPanel reloadKey={0} />);
     expect(await screen.findByText(/no gate checks recorded yet/i)).toBeInTheDocument();
+  });
+
+  it('warns when the repo changed since the last ship (stale)', async () => {
+    stubFetchOnce(makeReadyScore({ score: 100, status: 'READY', stale: true }));
+    render(<ShipReadinessPanel reloadKey={0} />);
+    expect(await screen.findByText(/files changed since this ship/i)).toBeInTheDocument();
+  });
+
+  it('shows the reflected ship timestamp when not stale', async () => {
+    stubFetchOnce(makeReadyScore({ score: 100, status: 'READY', stale: false }));
+    render(<ShipReadinessPanel reloadKey={0} />);
+    expect(await screen.findByText(/reflects the last ship/i)).toBeInTheDocument();
   });
 });

@@ -825,6 +825,15 @@ a:hover {
   text-align: center;
 }
 
+.readiness-note--stale {
+  color: var(--warn, #ffb454);
+  font-weight: 600;
+}
+
+.readiness-note--stale code {
+  font-family: var(--mono, ui-monospace, monospace);
+}
+
 /* --- data table --------------------------------------------------------- */
 
 .table-scroll {

@@ -43,10 +43,31 @@ function ReadyScoreView({ data }: { data: ReadyScore }): JSX.Element {
         <Stat label="Blocked" value={data.blocked} tone="blocked" />
         <Stat label="Warnings" value={data.warnings} tone="warn" />
       </StatGroup>
-      {total === 0 ? (
-        <p className="readiness-note">No gate checks recorded yet — run a ship check to populate this score.</p>
-      ) : null}
+      {readinessNote(data, total)}
     </div>
+  );
+}
+
+/** The footnote under the gauge: "no checks yet", a stale warning, or "as of <time>". */
+function readinessNote(data: ReadyScore, total: number): JSX.Element | null {
+  if (data.generatedAt === null) {
+    return total === 0 ? (
+      <p className="readiness-note">
+        No gate checks recorded yet — run a ship check to populate this score.
+      </p>
+    ) : null;
+  }
+  if (data.stale) {
+    return (
+      <p className="readiness-note readiness-note--stale" role="status">
+        ⚠ Files changed since this ship — run <code>devcortex ship</code> to refresh.
+      </p>
+    );
+  }
+  return (
+    <p className="readiness-note">
+      Reflects the last ship · {new Date(data.generatedAt).toLocaleString()}
+    </p>
   );
 }
 

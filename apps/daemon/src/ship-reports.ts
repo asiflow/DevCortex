@@ -14,7 +14,7 @@
  * `## Blocked` / `## Warnings` sections) and degrades to `UNKNOWN`/zero counts
  * rather than throwing if that layout ever drifts.
  */
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import { workspacePaths } from '@devcortex/core';
@@ -34,6 +34,12 @@ export interface ReadyScore {
   passed: number;
   blocked: number;
   warnings: number;
+  /** ISO timestamp the reflected ship report was generated (null if none). */
+  generatedAt: string | null;
+  /** Filename of the reflected report (null if none). */
+  reportName: string | null;
+  /** True when a tracked file changed after the report — the score may be out of date. */
+  stale: boolean;
 }
 
 /** Status reported when the repo has never generated a ship report. */
@@ -90,9 +96,11 @@ interface ParsedReport {
   passed: number;
   blocked: number;
   warnings: number;
+  generatedAt: string | null;
 }
 
 const STATUS_LINE = /^- \*\*Status:\*\* (.+)$/;
+const GENERATED_LINE = /^- \*\*Generated:\*\* (.+)$/;
 
 /**
  * Parse the compact counts + status from a ship-report markdown body. Robust to
@@ -104,6 +112,7 @@ export function parseShipReport(markdown: string): ParsedReport {
   let passed = 0;
   let blocked = 0;
   let warnings = 0;
+  let generatedAt: string | null = null;
 
   type Section = 'passed' | 'blocked' | 'warnings' | 'other';
   let section: Section = 'other';
@@ -112,6 +121,12 @@ export function parseShipReport(markdown: string): ParsedReport {
     const statusMatch = STATUS_LINE.exec(line);
     if (statusMatch && statusMatch[1] !== undefined) {
       status = statusMatch[1].trim();
+      continue;
+    }
+
+    const generatedMatch = GENERATED_LINE.exec(line);
+    if (generatedMatch && generatedMatch[1] !== undefined) {
+      generatedAt = generatedMatch[1].trim();
       continue;
     }
 
@@ -139,24 +154,68 @@ export function parseShipReport(markdown: string): ParsedReport {
     }
   }
 
-  return { status, passed, blocked, warnings };
+  return { status, passed, blocked, warnings, generatedAt };
+}
+
+/**
+ * True when any tracked file was modified after `generatedAt` — i.e. the repo
+ * changed since the reflected ship, so its verdict may be out of date. Reads the
+ * cached graph's file list and stats each, short-circuiting on the first newer
+ * file. Degrades to `false` (no false alarm) if it can't determine an answer.
+ */
+async function isStaleSince(root: string, generatedAt: string | null): Promise<boolean> {
+  if (generatedAt === null) return false;
+  const shippedAt = Date.parse(generatedAt);
+  if (Number.isNaN(shippedAt)) return false;
+
+  let files: { path: string }[];
+  try {
+    const graph = JSON.parse(await readFile(workspacePaths(root).graph, 'utf8')) as {
+      files?: { path: string }[];
+    };
+    files = Array.isArray(graph.files) ? graph.files.slice(0, 5000) : [];
+  } catch {
+    return false;
+  }
+
+  for (const f of files) {
+    try {
+      const s = await stat(path.join(root, f.path));
+      if (s.mtimeMs > shippedAt) return true;
+    } catch {
+      // file removed/unreadable between graph capture and now — ignore.
+    }
+  }
+  return false;
 }
 
 /**
  * Compute the readiness score from the newest persisted ship report. Blocked
- * (required) failures weigh full; warnings weigh half. Returns a well-defined
+ * (required) failures weigh full; warnings weigh half. Also reports the ship's
+ * timestamp and whether the repo has changed since (so the dashboard can show
+ * "READY as of <time>" and flag a stale verdict). Returns a well-defined
  * `NO_REPORT` summary when the repo has never shipped.
  */
 export async function readyScore(root: string): Promise<ReadyScore> {
   const [latest] = await listShipReports(root, 1);
   if (latest === undefined) {
-    return { score: 0, status: NO_REPORT_STATUS, passed: 0, blocked: 0, warnings: 0 };
+    return {
+      score: 0,
+      status: NO_REPORT_STATUS,
+      passed: 0,
+      blocked: 0,
+      warnings: 0,
+      generatedAt: null,
+      reportName: null,
+      stale: false,
+    };
   }
 
-  const { status, passed, blocked, warnings } = parseShipReport(latest.markdown);
+  const { status, passed, blocked, warnings, generatedAt } = parseShipReport(latest.markdown);
   const total = passed + blocked + warnings;
   const numerator = passed + 0.5 * warnings;
   const score = total === 0 ? 0 : Math.round((100 * numerator) / total);
+  const stale = await isStaleSince(root, generatedAt);
 
-  return { score, status, passed, blocked, warnings };
+  return { score, status, passed, blocked, warnings, generatedAt, reportName: latest.name, stale };
 }

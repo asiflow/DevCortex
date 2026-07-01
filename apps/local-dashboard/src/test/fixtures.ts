@@ -16,6 +16,9 @@ export function makeReadyScore(overrides: Partial<ReadyScore> = {}): ReadyScore 
     passed: 11,
     blocked: 0,
     warnings: 2,
+    generatedAt: '2026-07-01T12:00:00.000Z',
+    reportName: '2026-07-01T12-00-00-000Z-fixture.md',
+    stale: false,
     ...overrides,
   };
 }
