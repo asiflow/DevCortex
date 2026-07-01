@@ -44,8 +44,14 @@ jobs:
       - name: Build
         run: pnpm -r build
 
-      - name: Publish
-        run: pnpm --filter devcortex publish --access public --no-git-checks
+      - name: Publish CLI (@asiflow/devcortex)
+        run: pnpm --filter @asiflow/devcortex publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
+
+      - name: Publish MCP server (@asiflow/devcortex-mcp)
+        run: pnpm --filter @asiflow/devcortex-mcp publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true

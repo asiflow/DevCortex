@@ -1,4 +1,4 @@
-# @devcortex/mcp-server
+# @asiflow/devcortex-mcp
 
 The **DevCortex MCP server** — exposes the local, tokenless `cortex.*` engineering
 tools to any MCP client (Claude Code, Cursor, Codex CLI, VS Code agent mode, …):
@@ -12,7 +12,7 @@ Register it in your client's MCP config — no install needed:
   "mcpServers": {
     "devcortex-mcp": {
       "command": "npx",
-      "args": ["-y", "@devcortex/mcp-server"]
+      "args": ["-y", "@asiflow/devcortex-mcp"]
     }
   }
 }
@@ -21,7 +21,7 @@ Register it in your client's MCP config — no install needed:
 Or install it globally so the `devcortex-mcp` binary is on your `PATH`:
 
 ```bash
-npm install -g @devcortex/mcp-server
+npm install -g @asiflow/devcortex-mcp
 ```
 
 The server resolves the repository root from `--root <dir>`, then `DEVCORTEX_ROOT`,

@@ -33,7 +33,7 @@ The complete local **remember → protect → verify → ship** loop.
 
 **Integrations**
 - Claude Code lifecycle hooks (`devcortex install claude`).
-- `@devcortex/mcp-server` — the engine as `cortex.*` tools for any MCP client (stdio).
+- `@asiflow/devcortex-mcp` — the engine as `cortex.*` tools for any MCP client (stdio).
 - Adapters for **Codex**, **Cursor**, **VS Code** agent mode, and a **GitHub Action**.
 
 **MCP governance & privacy**
@@ -53,12 +53,10 @@ _829 tests green · strict TypeScript · pnpm + turborepo monorepo._
 
 ## 🔜 Next (open-source)
 
-- **`npx devcortex`** — the CLI is packaged as a self-contained npm binary;
-  publish to the registry is the remaining step.
-- **Publish to npm** — both `devcortex` and `@devcortex/mcp-server` are packaged as
-  self-contained npm bundles (verified via clean-install tarball tests); pushing them
-  to the registry is the remaining step, after which `npx devcortex` and
-  `npx @devcortex/mcp-server` work with zero setup.
+- **Publish to npm** — both `@asiflow/devcortex` (the CLI) and `@asiflow/devcortex-mcp`
+  (the MCP server) are packaged as self-contained npm bundles, verified via
+  clean-install tarball tests; publishing to the registry is the remaining step, after
+  which `npx @asiflow/devcortex` and `npx @asiflow/devcortex-mcp` work with zero setup.
 - **More stack packs** — Next.js ships today; Python/FastAPI, Go, and generic
   Node/Vite packs are next.
 - **Richer demo + docs site** — the 30–60s terminal demo (`demo/demo.tape`) and a

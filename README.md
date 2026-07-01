@@ -9,7 +9,7 @@ and persistent **project memory** — for Claude Code, Codex, Cursor, VS Code ag
 mode, and any MCP client.
 
 [![CI](https://github.com/asiflow/DevCortex/actions/workflows/ci.yml/badge.svg)](https://github.com/asiflow/DevCortex/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/devcortex?color=00c853&label=npm)](https://www.npmjs.com/package/devcortex)
+[![npm](https://img.shields.io/npm/v/@asiflow/devcortex?color=00c853&label=npm)](https://www.npmjs.com/package/@asiflow/devcortex)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 [![Tests](https://img.shields.io/badge/tests-829%20passing-00c853.svg)](#quality)
 
@@ -98,7 +98,8 @@ checks, risks, feature ledger, and architecture — all on `127.0.0.1`, no cloud
 ## Install
 
 ```bash
-npx devcortex init                       # scan the repo, create .cortex/, pick a mode
+npm install -g @asiflow/devcortex        # installs the `devcortex` command (or use npx @asiflow/devcortex)
+devcortex init                           # scan the repo, create .cortex/, pick a mode
 devcortex preflight "add subscription billing"   # risk + blast radius + context, up front
 devcortex ship                           # evidence-backed ship report (exit 2 when NOT_READY)
 ```
@@ -117,7 +118,7 @@ devcortex install --all      # all of the above
 Or point **any MCP client** at the stdio server (`cortex.*` tools) — zero install:
 
 ```json
-{ "mcpServers": { "devcortex-mcp": { "command": "npx", "args": ["-y", "@devcortex/mcp-server"] } } }
+{ "mcpServers": { "devcortex-mcp": { "command": "npx", "args": ["-y", "@asiflow/devcortex-mcp"] } } }
 ```
 
 📖 **Full setup for every host — [docs/integrations.md](./docs/integrations.md)** —

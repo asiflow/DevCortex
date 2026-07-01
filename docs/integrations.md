@@ -7,10 +7,12 @@ initialize it in your project, then wire it into your agent (one command per hos
 
 ## 1. In your project
 
-From your repository root:
+Install the CLI (this puts the `devcortex` command on your `PATH`), then from your
+repository root:
 
 ```bash
-npx devcortex init
+npm install -g @asiflow/devcortex
+devcortex init
 ```
 
 This scans the repo and creates a `.cortex/` **project brain** — the project graph
@@ -103,10 +105,11 @@ devcortex install github
 
 Writes `.github/workflows/devcortex.yml` and a composite
 `.github/actions/devcortex-ship-check/action.yml` that enforce the DevCortex gate on
-pull requests. Add `devcortex` as a devDependency so `npx devcortex` resolves in CI:
+pull requests. Add `@asiflow/devcortex` as a devDependency so `npx devcortex` resolves
+in CI:
 
 ```bash
-npm install --save-dev devcortex     # (or pnpm add -D devcortex)
+npm install --save-dev @asiflow/devcortex     # (or pnpm add -D @asiflow/devcortex)
 ```
 
 ---
@@ -122,7 +125,7 @@ ship gate). Register it in your client's MCP config:
   "mcpServers": {
     "devcortex-mcp": {
       "command": "npx",
-      "args": ["-y", "@devcortex/mcp-server"]
+      "args": ["-y", "@asiflow/devcortex-mcp"]
     }
   }
 }
@@ -133,14 +136,14 @@ the current working directory — so no path config is needed in the common case
 (`devcortex install` writes the equivalent config using the `devcortex-mcp` binary;
 see below.)
 
-**Getting the `devcortex-mcp` server.** It ships as the **`@devcortex/mcp-server`**
+**Getting the `devcortex-mcp` server.** It ships as the **`@asiflow/devcortex-mcp`**
 npm package — self-contained, no build step. The `npx` config above needs nothing
 installed. If you'd rather have the `devcortex-mcp` binary on your `PATH` (which is
 what `devcortex install` writes into `.mcp.json` / `.codex/config.toml`), install it
 globally:
 
 ```bash
-npm install -g @devcortex/mcp-server
+npm install -g @asiflow/devcortex-mcp
 ```
 
 > Building from source instead? After `pnpm install && pnpm -r build`, point your
