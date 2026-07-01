@@ -88,8 +88,16 @@ actionable instruction comes back — it doesn't burn your tokens.
 
 ## The local dashboard
 
-`devcortex dashboard` serves a live view of every project's ship-readiness, failing
-checks, risks, feature ledger, and architecture — all on `127.0.0.1`, no cloud.
+Run `devcortex dashboard` in your project — it starts a local daemon and prints a URL
+to open in your browser (default `http://127.0.0.1:7420`):
+
+```bash
+devcortex dashboard      # starts the daemon, prints the dashboard URL
+devcortex daemon stop    # stop it when you're done
+```
+
+It serves a live view of ship-readiness, failing checks, risks, the feature ledger,
+and the architecture map — all on `127.0.0.1`, no cloud.
 
 <div align="center">
 <img src="./docs/dashboard.png" alt="DevCortex local dashboard — ship-readiness gauge, failed checks, risks, feature ledger, architecture map" width="860" />

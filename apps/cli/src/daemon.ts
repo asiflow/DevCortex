@@ -10,14 +10,12 @@
 
 import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
-import { createRequire } from 'node:module';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { DevCortexError, workspacePaths } from '@devcortex/core';
 
 import type { CommandResult, GlobalOptions } from './runtime';
-
-const nodeRequire = createRequire(import.meta.url);
 
 /** Default port the daemon binds on 127.0.0.1 (mirrors @devcortex/daemon). */
 const DEFAULT_DAEMON_PORT = 7420;
@@ -67,10 +65,18 @@ function isAlive(pid: number): boolean {
   }
 }
 
-/** Resolve the built daemon executable (`@devcortex/daemon` bin → dist/main.js). */
+/**
+ * The daemon ships as a sibling bundle next to this CLI (dist/daemon.js), so it
+ * resolves whether run from the workspace or a global npm install — where
+ * `@devcortex/daemon` is inlined into the CLI, not a resolvable module on disk.
+ */
 function resolveDaemonBin(): string {
-  const pkgJson = nodeRequire.resolve('@devcortex/daemon/package.json');
-  return path.join(path.dirname(pkgJson), 'dist', 'main.js');
+  return fileURLToPath(new URL('./daemon.js', import.meta.url));
+}
+
+/** The dashboard SPA ships next to the CLI too (dist/dashboard/). */
+function resolveDashboardDist(): string {
+  return fileURLToPath(new URL('./dashboard', import.meta.url));
 }
 
 async function delay(ms: number): Promise<void> {
@@ -117,6 +123,9 @@ export async function cmdDaemonStart(
   const child = spawn(process.execPath, [resolveDaemonBin(), '--root', g.root, '--port', String(port)], {
     detached: true,
     stdio: 'ignore',
+    // Point the daemon at the dashboard SPA shipped alongside the CLI, so it
+    // serves the UI from a global npm install (not just the workspace).
+    env: { ...process.env, DEVCORTEX_DASHBOARD_DIST: resolveDashboardDist() },
   });
   child.unref();
 

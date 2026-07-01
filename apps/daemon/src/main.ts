@@ -1,8 +1,8 @@
-#!/usr/bin/env node
 /**
  * `devcortex-daemon` executable — parses args, starts the daemon, writes a
  * best-effort pidfile under `.cortex/cache/`, and shuts down cleanly on
- * SIGINT/SIGTERM.
+ * SIGINT/SIGTERM. (The Node shebang is added by the tsup banner at build time,
+ * so both the daemon's own dist and the CLI's bundled copy get exactly one.)
  *
  * Usage: devcortex-daemon [--root <dir>] [--port <n>]
  *   --root  repo to watch/serve (default: cwd)
