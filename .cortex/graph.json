@@ -1,0 +1,2590 @@
+{
+  "schemaVersion": 1,
+  "root": "/Users/sheriefattia/Desktop/devcortex",
+  "generatedAt": "2026-06-30T17:05:50.923Z",
+  "stack": {
+    "framework": "nextjs",
+    "language": "typescript",
+    "packageManager": "pnpm",
+    "monorepo": true,
+    "deploymentTargets": []
+  },
+  "files": [
+    {
+      "path": ".DS_Store",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "other",
+        "store"
+      ]
+    },
+    {
+      "path": ".gitignore",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "gitignore",
+        "other"
+      ]
+    },
+    {
+      "path": ".npmrc",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "config",
+        "npmrc"
+      ]
+    },
+    {
+      "path": ".prettierrc.json",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "config",
+        "prettierrc"
+      ]
+    },
+    {
+      "path": "LICENSE",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "license",
+        "other"
+      ]
+    },
+    {
+      "path": "README.md",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "other",
+        "readme"
+      ]
+    },
+    {
+      "path": "apps/.DS_Store",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "apps",
+        "other",
+        "store"
+      ]
+    },
+    {
+      "path": "apps/cli/.DS_Store",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "apps",
+        "cli",
+        "other",
+        "store"
+      ]
+    },
+    {
+      "path": "apps/cli/package.json",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "apps",
+        "cli",
+        "config",
+        "package"
+      ]
+    },
+    {
+      "path": "apps/cli/src/cli.ts",
+      "kind": "other",
+      "imports": [
+        "apps/cli/src/commands.ts",
+        "apps/cli/src/runtime.ts"
+      ],
+      "importedBy": [],
+      "symbols": [
+        "run"
+      ],
+      "risky": false,
+      "tags": [
+        "apps",
+        "cli",
+        "other"
+      ]
+    },
+    {
+      "path": "apps/cli/src/commands.ts",
+      "kind": "other",
+      "imports": [
+        "apps/cli/src/format.ts",
+        "apps/cli/src/runtime.ts"
+      ],
+      "importedBy": [
+        "apps/cli/src/cli.ts"
+      ],
+      "symbols": [
+        "ContextOpts",
+        "FeatureAddOpts",
+        "FeatureListOpts",
+        "InitOpts",
+        "InstallOpts",
+        "MemoryAddOpts",
+        "MemoryListOpts",
+        "cmdContext",
+        "cmdDoctor",
+        "cmdFeatureAdd",
+        "cmdFeatureGet",
+        "cmdFeatureList",
+        "cmdGuard",
+        "cmdInit",
+        "cmdInstall",
+        "cmdMemoryAdd",
+        "cmdMemoryGet",
+        "cmdMemoryList",
+        "cmdPreflight",
+        "cmdRecordEvidence",
+        "cmdScan",
+        "cmdShip",
+        "cmdVerify",
+        "emit"
+      ],
+      "risky": false,
+      "tags": [
+        "apps",
+        "cli",
+        "commands",
+        "other"
+      ]
+    },
+    {
+      "path": "apps/cli/src/format.ts",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [
+        "apps/cli/src/commands.ts"
+      ],
+      "symbols": [
+        "DoctorCheck",
+        "DoctorStatus",
+        "PreflightView",
+        "ShipView",
+        "renderContext",
+        "renderDecision",
+        "renderDoctor",
+        "renderFeatureItem",
+        "renderFeatureList",
+        "renderInit",
+        "renderInstall",
+        "renderMemoryItem",
+        "renderMemoryList",
+        "renderPreflight",
+        "renderScan",
+        "renderShipStatus",
+        "renderVerify",
+        "riskTag"
+      ],
+      "risky": false,
+      "tags": [
+        "apps",
+        "cli",
+        "format",
+        "other"
+      ]
+    },
+    {
+      "path": "apps/cli/src/runtime.ts",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [
+        "apps/cli/src/cli.ts",
+        "apps/cli/src/commands.ts"
+      ],
+      "symbols": [
+        "CommandResult",
+        "EXIT_BLOCK",
+        "EXIT_INTERNAL_ERROR",
+        "EXIT_NOT_READY",
+        "EXIT_OK",
+        "GlobalOptions",
+        "HookOutcome",
+        "HookPayload",
+        "Ledgers",
+        "emit",
+        "emitHookOutcome",
+        "fail",
+        "loadOrScanGraph",
+        "makeLedgers",
+        "readGlobals",
+        "readHookPayload",
+        "relWorkspacePath",
+        "renderError",
+        "requireConfig",
+        "workspacePaths"
+      ],
+      "risky": false,
+      "tags": [
+        "apps",
+        "cli",
+        "other",
+        "runtime"
+      ]
+    },
+    {
+      "path": "apps/cli/tests/cli.test.ts",
+      "kind": "test",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "apps",
+        "cli",
+        "test",
+        "tests"
+      ]
+    },
+    {
+      "path": "apps/cli/tsconfig.json",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "apps",
+        "cli",
+        "config",
+        "tsconfig"
+      ]
+    },
+    {
+      "path": "apps/cli/tsup.config.ts",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "default"
+      ],
+      "risky": true,
+      "tags": [
+        "apps",
+        "cli",
+        "config",
+        "tsup"
+      ]
+    },
+    {
+      "path": "apps/cli/vitest.config.ts",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "default"
+      ],
+      "risky": true,
+      "tags": [
+        "apps",
+        "cli",
+        "config",
+        "vitest"
+      ]
+    },
+    {
+      "path": "docs/.DS_Store",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "docs",
+        "other",
+        "store"
+      ]
+    },
+    {
+      "path": "docs/getting-started.md",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "docs",
+        "getting",
+        "other",
+        "started"
+      ]
+    },
+    {
+      "path": "docs/spec/2026-06-30-devcortex-cognition-spine-design.md",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "2026",
+        "cognition",
+        "design",
+        "devcortex",
+        "docs",
+        "other",
+        "spec",
+        "spine"
+      ]
+    },
+    {
+      "path": "eslint.config.mjs",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "default"
+      ],
+      "risky": true,
+      "tags": [
+        "config",
+        "eslint"
+      ]
+    },
+    {
+      "path": "fixtures/.DS_Store",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "fixtures",
+        "other",
+        "store"
+      ]
+    },
+    {
+      "path": "fixtures/sample-next-app/.env.example",
+      "kind": "env",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "env",
+        "example",
+        "fixtures",
+        "next",
+        "sample"
+      ]
+    },
+    {
+      "path": "fixtures/sample-next-app/app/api/user/route.ts",
+      "kind": "api",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "GET",
+        "POST"
+      ],
+      "risky": false,
+      "tags": [
+        "api",
+        "fixtures",
+        "next",
+        "sample",
+        "user"
+      ]
+    },
+    {
+      "path": "fixtures/sample-next-app/app/dashboard/page.tsx",
+      "kind": "component",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "DashboardPage",
+        "default",
+        "metadata"
+      ],
+      "risky": false,
+      "tags": [
+        "component",
+        "dashboard",
+        "fixtures",
+        "next",
+        "sample"
+      ]
+    },
+    {
+      "path": "fixtures/sample-next-app/app/layout.tsx",
+      "kind": "component",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "RootLayout",
+        "default",
+        "metadata"
+      ],
+      "risky": false,
+      "tags": [
+        "component",
+        "fixtures",
+        "layout",
+        "next",
+        "sample"
+      ]
+    },
+    {
+      "path": "fixtures/sample-next-app/app/page.tsx",
+      "kind": "component",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "HomePage",
+        "default"
+      ],
+      "risky": false,
+      "tags": [
+        "component",
+        "fixtures",
+        "next",
+        "sample"
+      ]
+    },
+    {
+      "path": "fixtures/sample-next-app/components/Button.tsx",
+      "kind": "component",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "Button",
+        "ButtonProps",
+        "ButtonVariant"
+      ],
+      "risky": false,
+      "tags": [
+        "button",
+        "component",
+        "components",
+        "fixtures",
+        "next",
+        "sample"
+      ]
+    },
+    {
+      "path": "fixtures/sample-next-app/lib/auth.ts",
+      "kind": "auth",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "SESSION_COOKIE",
+        "Session",
+        "createSessionToken",
+        "getSession",
+        "hasValidSessionShape",
+        "requireSession",
+        "sessionMaxAgeSeconds",
+        "verifySessionToken"
+      ],
+      "risky": true,
+      "tags": [
+        "auth",
+        "fixtures",
+        "lib",
+        "next",
+        "sample"
+      ]
+    },
+    {
+      "path": "fixtures/sample-next-app/lib/db.ts",
+      "kind": "lib",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "ConnectionConfig",
+        "getConnectionConfig",
+        "getDatabaseUrl",
+        "resetConnectionConfig"
+      ],
+      "risky": false,
+      "tags": [
+        "fixtures",
+        "lib",
+        "next",
+        "sample"
+      ]
+    },
+    {
+      "path": "fixtures/sample-next-app/middleware.ts",
+      "kind": "middleware",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "config",
+        "middleware"
+      ],
+      "risky": true,
+      "tags": [
+        "fixtures",
+        "middleware",
+        "next",
+        "sample"
+      ]
+    },
+    {
+      "path": "fixtures/sample-next-app/next.config.mjs",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "default"
+      ],
+      "risky": true,
+      "tags": [
+        "config",
+        "fixtures",
+        "next",
+        "sample"
+      ]
+    },
+    {
+      "path": "fixtures/sample-next-app/package.json",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "config",
+        "fixtures",
+        "next",
+        "package",
+        "sample"
+      ]
+    },
+    {
+      "path": "fixtures/sample-next-app/tsconfig.json",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "config",
+        "fixtures",
+        "next",
+        "sample",
+        "tsconfig"
+      ]
+    },
+    {
+      "path": "integrations/.DS_Store",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "integrations",
+        "other",
+        "store"
+      ]
+    },
+    {
+      "path": "integrations/claude-code/package.json",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "claude",
+        "code",
+        "config",
+        "integrations",
+        "package"
+      ]
+    },
+    {
+      "path": "integrations/claude-code/src/index.ts",
+      "kind": "other",
+      "imports": [
+        "integrations/claude-code/src/install.ts",
+        "integrations/claude-code/src/templates.ts"
+      ],
+      "importedBy": [
+        "integrations/claude-code/tests/install.test.ts"
+      ],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "claude",
+        "code",
+        "integrations",
+        "other"
+      ]
+    },
+    {
+      "path": "integrations/claude-code/src/install.ts",
+      "kind": "other",
+      "imports": [
+        "integrations/claude-code/src/templates.ts"
+      ],
+      "importedBy": [
+        "integrations/claude-code/src/index.ts"
+      ],
+      "symbols": [
+        "InstallChangeAction",
+        "InstallClaudeOptions",
+        "InstallFileAction",
+        "InstallPlanItem",
+        "InstallResult",
+        "InstalledFile",
+        "installClaude"
+      ],
+      "risky": false,
+      "tags": [
+        "claude",
+        "code",
+        "install",
+        "integrations",
+        "other"
+      ]
+    },
+    {
+      "path": "integrations/claude-code/src/templates.ts",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [
+        "integrations/claude-code/src/index.ts",
+        "integrations/claude-code/src/install.ts"
+      ],
+      "symbols": [
+        "CLAUDE_SETTINGS_PATH",
+        "ClaudeHookCommand",
+        "ClaudeHookGroup",
+        "ClaudeHooks",
+        "DEVCORTEX_CLI_BIN",
+        "DEVCORTEX_HOOK_MARKER",
+        "DEVCORTEX_MCP_COMMAND",
+        "DEVCORTEX_MCP_SERVER_NAME",
+        "HOOK_EVENTS",
+        "HOOK_SHIMS",
+        "HOOK_SHIM_DIR",
+        "HookEvent",
+        "HookShimSpec",
+        "MCP_CONFIG_PATH",
+        "MUTATING_TOOL_MATCHER",
+        "McpConfig",
+        "McpServerEntry",
+        "buildHookShim",
+        "buildMcpConfig",
+        "buildMcpServerEntry",
+        "buildSettingsHooks",
+        "hookShimCommand",
+        "isDevCortexHookGroup",
+        "mergeMcpConfig",
+        "mergeSettings"
+      ],
+      "risky": false,
+      "tags": [
+        "claude",
+        "code",
+        "integrations",
+        "other",
+        "templates"
+      ]
+    },
+    {
+      "path": "integrations/claude-code/tests/install.test.ts",
+      "kind": "test",
+      "imports": [
+        "integrations/claude-code/src/index.ts"
+      ],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "claude",
+        "code",
+        "install",
+        "integrations",
+        "test",
+        "tests"
+      ]
+    },
+    {
+      "path": "integrations/claude-code/tsconfig.json",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "claude",
+        "code",
+        "config",
+        "integrations",
+        "tsconfig"
+      ]
+    },
+    {
+      "path": "integrations/claude-code/tsup.config.ts",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "default"
+      ],
+      "risky": true,
+      "tags": [
+        "claude",
+        "code",
+        "config",
+        "integrations",
+        "tsup"
+      ]
+    },
+    {
+      "path": "integrations/claude-code/vitest.config.ts",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "default"
+      ],
+      "risky": true,
+      "tags": [
+        "claude",
+        "code",
+        "config",
+        "integrations",
+        "vitest"
+      ]
+    },
+    {
+      "path": "package.json",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "config",
+        "package"
+      ]
+    },
+    {
+      "path": "packages/core/package.json",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "config",
+        "core",
+        "package",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/blast-radius/analyze.test.ts",
+      "kind": "test",
+      "imports": [
+        "packages/core/src/blast-radius/analyze.ts",
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/graph/index.ts"
+      ],
+      "importedBy": [],
+      "symbols": [
+        "Button",
+        "Dashboard",
+        "GET",
+        "createCheckout",
+        "default",
+        "middleware",
+        "ok",
+        "query",
+        "requireUser"
+      ],
+      "risky": false,
+      "tags": [
+        "analyze",
+        "blast",
+        "core",
+        "packages",
+        "radius",
+        "test"
+      ]
+    },
+    {
+      "path": "packages/core/src/blast-radius/analyze.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/graph/index.ts",
+        "packages/core/src/policy/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/blast-radius/analyze.test.ts",
+        "packages/core/src/blast-radius/index.ts"
+      ],
+      "symbols": [
+        "analyzeBlastRadius"
+      ],
+      "risky": false,
+      "tags": [
+        "analyze",
+        "blast",
+        "core",
+        "other",
+        "packages",
+        "radius"
+      ]
+    },
+    {
+      "path": "packages/core/src/blast-radius/index.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/blast-radius/analyze.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/compilers/intent.ts",
+        "packages/core/src/index.ts"
+      ],
+      "symbols": [
+        "analyzeBlastRadius"
+      ],
+      "risky": false,
+      "tags": [
+        "blast",
+        "core",
+        "other",
+        "packages",
+        "radius"
+      ]
+    },
+    {
+      "path": "packages/core/src/compilers/compilers.test.ts",
+      "kind": "test",
+      "imports": [
+        "packages/core/src/compilers/context.ts",
+        "packages/core/src/compilers/intent.ts",
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/ledgers/index.ts",
+        "packages/core/src/stackpacks/index.ts"
+      ],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "compilers",
+        "core",
+        "packages",
+        "test"
+      ]
+    },
+    {
+      "path": "packages/core/src/compilers/context.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/graph/index.ts",
+        "packages/core/src/ledgers/index.ts",
+        "packages/core/src/policy/index.ts",
+        "packages/core/src/stackpacks/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/compilers/compilers.test.ts",
+        "packages/core/src/compilers/index.ts"
+      ],
+      "symbols": [
+        "ContextLedgers",
+        "compileContext"
+      ],
+      "risky": false,
+      "tags": [
+        "compilers",
+        "context",
+        "core",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/compilers/index.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/compilers/context.ts",
+        "packages/core/src/compilers/intent.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/index.ts"
+      ],
+      "symbols": [
+        "compileContext",
+        "compileIntent"
+      ],
+      "risky": false,
+      "tags": [
+        "compilers",
+        "core",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/compilers/intent.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/blast-radius/index.ts",
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/graph/index.ts",
+        "packages/core/src/policy/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/compilers/compilers.test.ts",
+        "packages/core/src/compilers/index.ts"
+      ],
+      "symbols": [
+        "compileIntent"
+      ],
+      "risky": false,
+      "tags": [
+        "compilers",
+        "core",
+        "intent",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/domain/errors.ts",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [
+        "packages/core/src/domain/index.ts"
+      ],
+      "symbols": [
+        "ConfigError",
+        "DEVCORTEX_ERROR_CODES",
+        "DevCortexError",
+        "DevCortexErrorCode",
+        "DevCortexErrorOptions",
+        "EvidenceError",
+        "GateError",
+        "LedgerError",
+        "PolicyViolationError",
+        "ScanError",
+        "SchemaValidationError",
+        "WorkspaceError",
+        "isDevCortexError"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "domain",
+        "errors",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/domain/index.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/errors.ts",
+        "packages/core/src/domain/schemas.ts",
+        "packages/core/src/domain/types.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/blast-radius/analyze.test.ts",
+        "packages/core/src/blast-radius/analyze.ts",
+        "packages/core/src/compilers/compilers.test.ts",
+        "packages/core/src/compilers/context.ts",
+        "packages/core/src/compilers/intent.ts",
+        "packages/core/src/evidence/block.ts",
+        "packages/core/src/evidence/evidence.test.ts",
+        "packages/core/src/evidence/verifiers.ts",
+        "packages/core/src/gates/gates.test.ts",
+        "packages/core/src/gates/gates.ts",
+        "packages/core/src/graph/classify.ts",
+        "packages/core/src/graph/detect.ts",
+        "packages/core/src/graph/graph.test.ts",
+        "packages/core/src/graph/relevance.ts",
+        "packages/core/src/graph/routes.ts",
+        "packages/core/src/graph/scan.ts",
+        "packages/core/src/index.ts",
+        "packages/core/src/ledgers/decision-ledger.ts",
+        "packages/core/src/ledgers/evidence-ledger.ts",
+        "packages/core/src/ledgers/feature-ledger.ts",
+        "packages/core/src/ledgers/json-ledger.ts",
+        "packages/core/src/ledgers/ledgers.test.ts",
+        "packages/core/src/ledgers/memory-ledger.ts",
+        "packages/core/src/policy/classify.ts",
+        "packages/core/src/policy/depth.ts",
+        "packages/core/src/policy/mode.ts",
+        "packages/core/src/policy/policy.test.ts",
+        "packages/core/src/policy/protected.ts",
+        "packages/core/src/policy/risk-order.ts",
+        "packages/core/src/stackpacks/index.ts",
+        "packages/core/src/stackpacks/nextjs.ts",
+        "packages/core/src/stackpacks/stackpacks.test.ts",
+        "packages/core/src/workspace/config.ts",
+        "packages/core/src/workspace/docs.ts",
+        "packages/core/src/workspace/graph-store.ts",
+        "packages/core/src/workspace/init.ts",
+        "packages/core/src/workspace/paths.ts",
+        "packages/core/src/workspace/workspace.test.ts"
+      ],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "core",
+        "domain",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/domain/schemas.ts",
+      "kind": "schema",
+      "imports": [
+        "packages/core/src/domain/types.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/domain/index.ts"
+      ],
+      "symbols": [
+        "CortexCommandsSchema",
+        "CortexConfigSchema",
+        "DecisionRecordSchema",
+        "DecisionStatusSchema",
+        "DetectedStackSchema",
+        "EnvVarSchema",
+        "EvidenceItemSchema",
+        "EvidenceKindSchema",
+        "EvidenceRefSchema",
+        "EvidenceStatusSchema",
+        "FeatureRecordSchema",
+        "FeatureStatusSchema",
+        "FileKindSchema",
+        "FileNodeSchema",
+        "FrameworkSchema",
+        "GateConfigSchema",
+        "GraphStatsSchema",
+        "LanguageSchema",
+        "MemoryItemSchema",
+        "MemoryTypeSchema",
+        "OperatingModeSchema",
+        "PackageManagerSchema",
+        "PrivacyModeSchema",
+        "ProjectGraphSchema",
+        "RiskLevelSchema",
+        "RiskPolicySchema",
+        "RouteNodeSchema",
+        "TaskTypeSchema"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "domain",
+        "packages",
+        "schema",
+        "schemas"
+      ]
+    },
+    {
+      "path": "packages/core/src/domain/types.ts",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/domain/schemas.ts"
+      ],
+      "symbols": [
+        "BlastRadius",
+        "CONTEXT_DEPTHS",
+        "CheckResult",
+        "ContextDepth",
+        "ContextPack",
+        "CortexCommands",
+        "CortexConfig",
+        "DECISION_STATUSES",
+        "DecisionRecord",
+        "DecisionStatus",
+        "DetectedStack",
+        "EVIDENCE_KINDS",
+        "EVIDENCE_STATUSES",
+        "EnvVar",
+        "EvidenceItem",
+        "EvidenceKind",
+        "EvidenceRef",
+        "EvidenceStatus",
+        "FEATURE_STATUSES",
+        "FILE_KINDS",
+        "FRAMEWORKS",
+        "FeatureRecord",
+        "FeatureStatus",
+        "FileKind",
+        "FileNode",
+        "Framework",
+        "GateConfig",
+        "GateResult",
+        "GraphStats",
+        "IntentContract",
+        "KnownFailure",
+        "LANGUAGES",
+        "Language",
+        "MEMORY_TYPES",
+        "MemoryItem",
+        "MemoryType",
+        "OPERATING_MODES",
+        "OperatingMode",
+        "PACKAGE_MANAGERS",
+        "PRIVACY_MODES",
+        "PackageManager",
+        "PrivacyMode",
+        "ProjectGraph",
+        "RISK_LEVELS",
+        "RiskClassification",
+        "RiskLevel",
+        "RiskPolicy",
+        "RouteNode",
+        "Rule",
+        "SHIP_STATUSES",
+        "ShipReport",
+        "ShipStatus",
+        "StackPack",
+        "TASK_TYPES",
+        "TaskType",
+        "VersionCheck"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "domain",
+        "other",
+        "packages",
+        "types"
+      ]
+    },
+    {
+      "path": "packages/core/src/evidence/block.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/evidence/evidence.test.ts",
+        "packages/core/src/evidence/index.ts"
+      ],
+      "symbols": [
+        "BlockDecision",
+        "blockUnprovenDone"
+      ],
+      "risky": false,
+      "tags": [
+        "block",
+        "core",
+        "evidence",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/evidence/evidence.test.ts",
+      "kind": "test",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/evidence/block.ts",
+        "packages/core/src/evidence/verifiers.ts"
+      ],
+      "importedBy": [],
+      "symbols": [
+        "ExportedIface",
+        "aliasName",
+        "default",
+        "exportedConst",
+        "exportedFn",
+        "x",
+        "y",
+        "z"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "evidence",
+        "packages",
+        "test"
+      ]
+    },
+    {
+      "path": "packages/core/src/evidence/index.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/evidence/block.ts",
+        "packages/core/src/evidence/verifiers.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/gates/gates.ts",
+        "packages/core/src/index.ts"
+      ],
+      "symbols": [
+        "blockUnprovenDone",
+        "verifyBuildEvidence",
+        "verifyCommandResult",
+        "verifyFileExists",
+        "verifyImportPath",
+        "verifyRouteExists",
+        "verifySymbolExists"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "evidence",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/evidence/verifiers.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/evidence/evidence.test.ts",
+        "packages/core/src/evidence/index.ts"
+      ],
+      "symbols": [
+        "CommandOptions",
+        "verifyBuildEvidence",
+        "verifyCommandResult",
+        "verifyFileExists",
+        "verifyImportPath",
+        "verifyRouteExists",
+        "verifySymbolExists"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "evidence",
+        "other",
+        "packages",
+        "verifiers"
+      ]
+    },
+    {
+      "path": "packages/core/src/gates/gates.test.ts",
+      "kind": "test",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/gates/gates.ts",
+        "packages/core/src/ledgers/index.ts",
+        "packages/core/src/workspace/paths.ts"
+      ],
+      "importedBy": [],
+      "symbols": [
+        "Page",
+        "default"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "gates",
+        "packages",
+        "test"
+      ]
+    },
+    {
+      "path": "packages/core/src/gates/gates.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/evidence/index.ts",
+        "packages/core/src/ledgers/index.ts",
+        "packages/core/src/workspace/paths.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/gates/gates.test.ts",
+        "packages/core/src/gates/index.ts"
+      ],
+      "symbols": [
+        "ShipLedgers",
+        "generateShipReport",
+        "runQualityGate"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "gates",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/gates/index.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/gates/gates.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/index.ts"
+      ],
+      "symbols": [
+        "generateShipReport",
+        "runQualityGate"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "gates",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/graph/classify.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/graph/graph.test.ts",
+        "packages/core/src/graph/relevance.ts",
+        "packages/core/src/graph/scan.ts"
+      ],
+      "symbols": [
+        "FileClassification",
+        "classifyFile",
+        "tokenize"
+      ],
+      "risky": false,
+      "tags": [
+        "classify",
+        "core",
+        "graph",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/graph/detect.test.ts",
+      "kind": "test",
+      "imports": [
+        "packages/core/src/graph/detect.ts"
+      ],
+      "importedBy": [],
+      "symbols": [
+        "default"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "detect",
+        "graph",
+        "packages",
+        "test"
+      ]
+    },
+    {
+      "path": "packages/core/src/graph/detect.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/graph/detect.test.ts",
+        "packages/core/src/graph/scan.ts"
+      ],
+      "symbols": [
+        "StackDetection",
+        "detectStack"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "detect",
+        "graph",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/graph/env.ts",
+      "kind": "env",
+      "imports": [],
+      "importedBy": [
+        "packages/core/src/graph/graph.test.ts",
+        "packages/core/src/graph/scan.ts"
+      ],
+      "symbols": [
+        "extractEnvRefs",
+        "parseEnvKeys"
+      ],
+      "risky": true,
+      "tags": [
+        "core",
+        "env",
+        "graph",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/graph/graph.test.ts",
+      "kind": "test",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/graph/classify.ts",
+        "packages/core/src/graph/env.ts",
+        "packages/core/src/graph/imports.ts",
+        "packages/core/src/graph/index.ts",
+        "packages/core/src/graph/routes.ts"
+      ],
+      "importedBy": [],
+      "symbols": [
+        "About",
+        "App",
+        "BlogPost",
+        "Button",
+        "Dashboard",
+        "GET",
+        "H",
+        "Layout",
+        "Legacy",
+        "Page",
+        "T",
+        "a",
+        "b",
+        "c",
+        "createCheckout",
+        "default",
+        "f",
+        "g",
+        "handler",
+        "middleware",
+        "ok",
+        "q",
+        "query",
+        "requireUser"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "graph",
+        "packages",
+        "test"
+      ]
+    },
+    {
+      "path": "packages/core/src/graph/imports.ts",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [
+        "packages/core/src/graph/graph.test.ts",
+        "packages/core/src/graph/scan.ts"
+      ],
+      "symbols": [
+        "AliasMap",
+        "ResolveContext",
+        "extractImportSpecifiers",
+        "extractSymbols",
+        "loadTsconfigAliases",
+        "resolveSpecifier"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "graph",
+        "imports",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/graph/index.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/graph/relevance.ts",
+        "packages/core/src/graph/scan.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/blast-radius/analyze.test.ts",
+        "packages/core/src/blast-radius/analyze.ts",
+        "packages/core/src/compilers/context.ts",
+        "packages/core/src/compilers/intent.ts",
+        "packages/core/src/graph/graph.test.ts",
+        "packages/core/src/index.ts",
+        "packages/core/src/workspace/init.ts"
+      ],
+      "symbols": [
+        "dependentsOf",
+        "relevantFiles",
+        "scanProject"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "graph",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/graph/relevance.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/graph/classify.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/graph/index.ts"
+      ],
+      "symbols": [
+        "dependentsOf",
+        "relevantFiles"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "graph",
+        "other",
+        "packages",
+        "relevance"
+      ]
+    },
+    {
+      "path": "packages/core/src/graph/routes.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/graph/graph.test.ts",
+        "packages/core/src/graph/scan.ts"
+      ],
+      "symbols": [
+        "detectRoutes"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "graph",
+        "other",
+        "packages",
+        "routes"
+      ]
+    },
+    {
+      "path": "packages/core/src/graph/scan.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/graph/classify.ts",
+        "packages/core/src/graph/detect.ts",
+        "packages/core/src/graph/env.ts",
+        "packages/core/src/graph/imports.ts",
+        "packages/core/src/graph/routes.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/graph/index.ts"
+      ],
+      "symbols": [
+        "ScanOptions",
+        "scanProject"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "graph",
+        "other",
+        "packages",
+        "scan"
+      ]
+    },
+    {
+      "path": "packages/core/src/index.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/blast-radius/index.ts",
+        "packages/core/src/compilers/index.ts",
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/evidence/index.ts",
+        "packages/core/src/gates/index.ts",
+        "packages/core/src/graph/index.ts",
+        "packages/core/src/ledgers/index.ts",
+        "packages/core/src/policy/index.ts",
+        "packages/core/src/stackpacks/index.ts",
+        "packages/core/src/workspace/index.ts"
+      ],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "core",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/ledgers/decision-ledger.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/ledgers/json-ledger.ts",
+        "packages/core/src/workspace/paths.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/ledgers/index.ts",
+        "packages/core/src/ledgers/ledgers.test.ts"
+      ],
+      "symbols": [
+        "DecisionInput",
+        "DecisionLedger",
+        "DecisionPatch"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "decision",
+        "ledger",
+        "ledgers",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/ledgers/evidence-ledger.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/ledgers/json-ledger.ts",
+        "packages/core/src/workspace/paths.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/ledgers/index.ts",
+        "packages/core/src/ledgers/ledgers.test.ts"
+      ],
+      "symbols": [
+        "EvidenceInput",
+        "EvidenceLedger"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "evidence",
+        "ledger",
+        "ledgers",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/ledgers/feature-ledger.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/ledgers/json-ledger.ts",
+        "packages/core/src/workspace/paths.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/ledgers/index.ts",
+        "packages/core/src/ledgers/ledgers.test.ts"
+      ],
+      "symbols": [
+        "FeatureInput",
+        "FeatureLedger",
+        "FeaturePatch"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "feature",
+        "ledger",
+        "ledgers",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/ledgers/index.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/ledgers/decision-ledger.ts",
+        "packages/core/src/ledgers/evidence-ledger.ts",
+        "packages/core/src/ledgers/feature-ledger.ts",
+        "packages/core/src/ledgers/json-ledger.ts",
+        "packages/core/src/ledgers/memory-ledger.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/compilers/compilers.test.ts",
+        "packages/core/src/compilers/context.ts",
+        "packages/core/src/gates/gates.test.ts",
+        "packages/core/src/gates/gates.ts",
+        "packages/core/src/index.ts",
+        "packages/core/src/ledgers/ledgers.test.ts"
+      ],
+      "symbols": [
+        "DecisionLedger",
+        "EvidenceLedger",
+        "FeatureLedger",
+        "JsonLedger",
+        "MemoryLedger"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "ledgers",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/ledgers/json-ledger.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/ledgers/decision-ledger.ts",
+        "packages/core/src/ledgers/evidence-ledger.ts",
+        "packages/core/src/ledgers/feature-ledger.ts",
+        "packages/core/src/ledgers/index.ts",
+        "packages/core/src/ledgers/memory-ledger.ts"
+      ],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "core",
+        "ledger",
+        "ledgers",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/ledgers/ledgers.test.ts",
+      "kind": "test",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/ledgers/decision-ledger.ts",
+        "packages/core/src/ledgers/evidence-ledger.ts",
+        "packages/core/src/ledgers/feature-ledger.ts",
+        "packages/core/src/ledgers/index.ts",
+        "packages/core/src/ledgers/memory-ledger.ts",
+        "packages/core/src/workspace/paths.ts"
+      ],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "core",
+        "ledgers",
+        "packages",
+        "test"
+      ]
+    },
+    {
+      "path": "packages/core/src/ledgers/memory-ledger.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/ledgers/json-ledger.ts",
+        "packages/core/src/workspace/paths.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/ledgers/index.ts",
+        "packages/core/src/ledgers/ledgers.test.ts"
+      ],
+      "symbols": [
+        "MemoryInput",
+        "MemoryLedger",
+        "MemoryPatch"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "ledger",
+        "ledgers",
+        "memory",
+        "other",
+        "packages"
+      ]
+    },
+    {
+      "path": "packages/core/src/policy/classify.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/policy/protected.ts",
+        "packages/core/src/policy/risk-order.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/policy/index.ts"
+      ],
+      "symbols": [
+        "classifyRisk"
+      ],
+      "risky": false,
+      "tags": [
+        "classify",
+        "core",
+        "other",
+        "packages",
+        "policy"
+      ]
+    },
+    {
+      "path": "packages/core/src/policy/depth.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/policy/index.ts"
+      ],
+      "symbols": [
+        "depthForRisk"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "depth",
+        "other",
+        "packages",
+        "policy"
+      ]
+    },
+    {
+      "path": "packages/core/src/policy/index.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/policy/classify.ts",
+        "packages/core/src/policy/depth.ts",
+        "packages/core/src/policy/mode.ts",
+        "packages/core/src/policy/protected.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/blast-radius/analyze.ts",
+        "packages/core/src/compilers/context.ts",
+        "packages/core/src/compilers/intent.ts",
+        "packages/core/src/index.ts",
+        "packages/core/src/policy/policy.test.ts"
+      ],
+      "symbols": [
+        "classifyRisk",
+        "depthForRisk",
+        "isProtected",
+        "shouldBlock"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "other",
+        "packages",
+        "policy"
+      ]
+    },
+    {
+      "path": "packages/core/src/policy/mode.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/policy/risk-order.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/policy/index.ts"
+      ],
+      "symbols": [
+        "shouldBlock"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "mode",
+        "other",
+        "packages",
+        "policy"
+      ]
+    },
+    {
+      "path": "packages/core/src/policy/policy.test.ts",
+      "kind": "test",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/policy/index.ts"
+      ],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "core",
+        "packages",
+        "policy",
+        "test"
+      ]
+    },
+    {
+      "path": "packages/core/src/policy/protected.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/policy/classify.ts",
+        "packages/core/src/policy/index.ts"
+      ],
+      "symbols": [
+        "isProtected"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "other",
+        "packages",
+        "policy",
+        "protected"
+      ]
+    },
+    {
+      "path": "packages/core/src/policy/risk-order.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/policy/classify.ts",
+        "packages/core/src/policy/mode.ts"
+      ],
+      "symbols": [
+        "RISK_RANK",
+        "maxRisk"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "order",
+        "other",
+        "packages",
+        "policy",
+        "risk"
+      ]
+    },
+    {
+      "path": "packages/core/src/stackpacks/index.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/stackpacks/nextjs.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/compilers/compilers.test.ts",
+        "packages/core/src/compilers/context.ts",
+        "packages/core/src/index.ts",
+        "packages/core/src/stackpacks/stackpacks.test.ts"
+      ],
+      "symbols": [
+        "allPacks",
+        "matchPacks",
+        "nextjsPack"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "other",
+        "packages",
+        "stackpacks"
+      ]
+    },
+    {
+      "path": "packages/core/src/stackpacks/nextjs.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/stackpacks/index.ts"
+      ],
+      "symbols": [
+        "dynamic",
+        "nextjsPack",
+        "runtime"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "nextjs",
+        "other",
+        "packages",
+        "stackpacks"
+      ]
+    },
+    {
+      "path": "packages/core/src/stackpacks/stackpacks.test.ts",
+      "kind": "test",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/stackpacks/index.ts"
+      ],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "core",
+        "packages",
+        "stackpacks",
+        "test"
+      ]
+    },
+    {
+      "path": "packages/core/src/workspace/config.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/workspace/paths.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/workspace/index.ts",
+        "packages/core/src/workspace/init.ts",
+        "packages/core/src/workspace/workspace.test.ts"
+      ],
+      "symbols": [
+        "CONFIG_SCHEMA_VERSION",
+        "defaultConfig",
+        "loadConfig",
+        "saveConfig"
+      ],
+      "risky": false,
+      "tags": [
+        "config",
+        "core",
+        "other",
+        "packages",
+        "workspace"
+      ]
+    },
+    {
+      "path": "packages/core/src/workspace/docs.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/workspace/init.ts"
+      ],
+      "symbols": [
+        "renderArchitectureMap",
+        "renderProjectBrief",
+        "renderQualityConstitution"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "docs",
+        "other",
+        "packages",
+        "workspace"
+      ]
+    },
+    {
+      "path": "packages/core/src/workspace/graph-store.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/workspace/paths.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/workspace/index.ts",
+        "packages/core/src/workspace/init.ts",
+        "packages/core/src/workspace/workspace.test.ts"
+      ],
+      "symbols": [
+        "loadGraph",
+        "saveGraph"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "graph",
+        "other",
+        "packages",
+        "store",
+        "workspace"
+      ]
+    },
+    {
+      "path": "packages/core/src/workspace/index.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/workspace/config.ts",
+        "packages/core/src/workspace/graph-store.ts",
+        "packages/core/src/workspace/init.ts",
+        "packages/core/src/workspace/paths.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/index.ts"
+      ],
+      "symbols": [
+        "CONFIG_SCHEMA_VERSION",
+        "defaultConfig",
+        "initWorkspace",
+        "isInitialized",
+        "loadConfig",
+        "loadGraph",
+        "saveConfig",
+        "saveGraph",
+        "workspacePaths"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "other",
+        "packages",
+        "workspace"
+      ]
+    },
+    {
+      "path": "packages/core/src/workspace/init.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/graph/index.ts",
+        "packages/core/src/workspace/config.ts",
+        "packages/core/src/workspace/docs.ts",
+        "packages/core/src/workspace/graph-store.ts",
+        "packages/core/src/workspace/paths.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/workspace/index.ts",
+        "packages/core/src/workspace/workspace.test.ts"
+      ],
+      "symbols": [
+        "initWorkspace",
+        "isInitialized"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "init",
+        "other",
+        "packages",
+        "workspace"
+      ]
+    },
+    {
+      "path": "packages/core/src/workspace/paths.ts",
+      "kind": "other",
+      "imports": [
+        "packages/core/src/domain/index.ts"
+      ],
+      "importedBy": [
+        "packages/core/src/gates/gates.test.ts",
+        "packages/core/src/gates/gates.ts",
+        "packages/core/src/ledgers/decision-ledger.ts",
+        "packages/core/src/ledgers/evidence-ledger.ts",
+        "packages/core/src/ledgers/feature-ledger.ts",
+        "packages/core/src/ledgers/ledgers.test.ts",
+        "packages/core/src/ledgers/memory-ledger.ts",
+        "packages/core/src/workspace/config.ts",
+        "packages/core/src/workspace/graph-store.ts",
+        "packages/core/src/workspace/index.ts",
+        "packages/core/src/workspace/init.ts",
+        "packages/core/src/workspace/workspace.test.ts"
+      ],
+      "symbols": [
+        "InitOptions",
+        "WorkspacePaths",
+        "workspacePaths"
+      ],
+      "risky": false,
+      "tags": [
+        "core",
+        "other",
+        "packages",
+        "paths",
+        "workspace"
+      ]
+    },
+    {
+      "path": "packages/core/src/workspace/workspace.test.ts",
+      "kind": "test",
+      "imports": [
+        "packages/core/src/domain/index.ts",
+        "packages/core/src/workspace/config.ts",
+        "packages/core/src/workspace/graph-store.ts",
+        "packages/core/src/workspace/init.ts",
+        "packages/core/src/workspace/paths.ts"
+      ],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "core",
+        "packages",
+        "test",
+        "workspace"
+      ]
+    },
+    {
+      "path": "packages/core/tsconfig.json",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "config",
+        "core",
+        "packages",
+        "tsconfig"
+      ]
+    },
+    {
+      "path": "packages/core/tsup.config.ts",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "default"
+      ],
+      "risky": true,
+      "tags": [
+        "config",
+        "core",
+        "packages",
+        "tsup"
+      ]
+    },
+    {
+      "path": "packages/core/vitest.config.ts",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "default"
+      ],
+      "risky": true,
+      "tags": [
+        "config",
+        "core",
+        "packages",
+        "vitest"
+      ]
+    },
+    {
+      "path": "packages/mcp-server/package.json",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "config",
+        "mcp",
+        "package",
+        "packages",
+        "server"
+      ]
+    },
+    {
+      "path": "packages/mcp-server/src/server.test.ts",
+      "kind": "test",
+      "imports": [
+        "packages/mcp-server/src/server.ts"
+      ],
+      "importedBy": [],
+      "symbols": [
+        "GET",
+        "Page",
+        "default",
+        "getSession",
+        "middleware"
+      ],
+      "risky": false,
+      "tags": [
+        "mcp",
+        "packages",
+        "server",
+        "test"
+      ]
+    },
+    {
+      "path": "packages/mcp-server/src/server.ts",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [
+        "packages/mcp-server/src/server.test.ts"
+      ],
+      "symbols": [
+        "CORTEX_TOOL_NAMES",
+        "createServer",
+        "resolveRoot"
+      ],
+      "risky": false,
+      "tags": [
+        "mcp",
+        "other",
+        "packages",
+        "server"
+      ]
+    },
+    {
+      "path": "packages/mcp-server/tsconfig.json",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "config",
+        "mcp",
+        "packages",
+        "server",
+        "tsconfig"
+      ]
+    },
+    {
+      "path": "packages/mcp-server/tsup.config.ts",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "default"
+      ],
+      "risky": true,
+      "tags": [
+        "config",
+        "mcp",
+        "packages",
+        "server",
+        "tsup"
+      ]
+    },
+    {
+      "path": "packages/mcp-server/vitest.config.ts",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [
+        "default"
+      ],
+      "risky": true,
+      "tags": [
+        "config",
+        "mcp",
+        "packages",
+        "server",
+        "vitest"
+      ]
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "kind": "other",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": false,
+      "tags": [
+        "lock",
+        "other",
+        "pnpm",
+        "yaml"
+      ]
+    },
+    {
+      "path": "pnpm-workspace.yaml",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "config",
+        "pnpm",
+        "workspace",
+        "yaml"
+      ]
+    },
+    {
+      "path": "tsconfig.base.json",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "base",
+        "config",
+        "tsconfig"
+      ]
+    },
+    {
+      "path": "turbo.json",
+      "kind": "config",
+      "imports": [],
+      "importedBy": [],
+      "symbols": [],
+      "risky": true,
+      "tags": [
+        "config",
+        "turbo"
+      ]
+    }
+  ],
+  "routes": [],
+  "envVars": [
+    {
+      "name": "AUTH_SECRET",
+      "usedIn": [
+        "packages/core/src/blast-radius/analyze.test.ts",
+        "packages/core/src/graph/graph.test.ts"
+      ],
+      "documented": false
+    },
+    {
+      "name": "BAR",
+      "usedIn": [
+        "packages/core/src/graph/graph.test.ts"
+      ],
+      "documented": false
+    },
+    {
+      "name": "DATABASE_URL",
+      "usedIn": [
+        "fixtures/sample-next-app/lib/db.ts",
+        "packages/core/src/blast-radius/analyze.test.ts",
+        "packages/core/src/graph/graph.test.ts"
+      ],
+      "documented": true
+    },
+    {
+      "name": "FOO",
+      "usedIn": [
+        "packages/core/src/graph/graph.test.ts"
+      ],
+      "documented": false
+    },
+    {
+      "name": "NEXT_PUBLIC_API_URL",
+      "usedIn": [
+        "packages/core/src/graph/graph.test.ts"
+      ],
+      "documented": false
+    },
+    {
+      "name": "NEXT_PUBLIC_APP_URL",
+      "usedIn": [
+        "fixtures/sample-next-app/app/layout.tsx",
+        "fixtures/sample-next-app/next.config.mjs"
+      ],
+      "documented": true
+    },
+    {
+      "name": "SESSION_MAX_AGE",
+      "usedIn": [
+        "fixtures/sample-next-app/lib/auth.ts"
+      ],
+      "documented": false
+    },
+    {
+      "name": "SESSION_SECRET",
+      "usedIn": [
+        "fixtures/sample-next-app/lib/auth.ts"
+      ],
+      "documented": true
+    },
+    {
+      "name": "STRIPE_SECRET_KEY",
+      "usedIn": [
+        "packages/core/src/blast-radius/analyze.test.ts",
+        "packages/core/src/graph/graph.test.ts"
+      ],
+      "documented": false
+    },
+    {
+      "name": "X",
+      "usedIn": [
+        "packages/core/src/graph/env.ts"
+      ],
+      "documented": false
+    }
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "riskyFiles": [
+    ".npmrc",
+    ".prettierrc.json",
+    "apps/cli/package.json",
+    "apps/cli/tsconfig.json",
+    "apps/cli/tsup.config.ts",
+    "apps/cli/vitest.config.ts",
+    "eslint.config.mjs",
+    "fixtures/sample-next-app/.env.example",
+    "fixtures/sample-next-app/lib/auth.ts",
+    "fixtures/sample-next-app/middleware.ts",
+    "fixtures/sample-next-app/next.config.mjs",
+    "fixtures/sample-next-app/package.json",
+    "fixtures/sample-next-app/tsconfig.json",
+    "integrations/claude-code/package.json",
+    "integrations/claude-code/tsconfig.json",
+    "integrations/claude-code/tsup.config.ts",
+    "integrations/claude-code/vitest.config.ts",
+    "package.json",
+    "packages/core/package.json",
+    "packages/core/src/graph/env.ts",
+    "packages/core/tsconfig.json",
+    "packages/core/tsup.config.ts",
+    "packages/core/vitest.config.ts",
+    "packages/mcp-server/package.json",
+    "packages/mcp-server/tsconfig.json",
+    "packages/mcp-server/tsup.config.ts",
+    "packages/mcp-server/vitest.config.ts",
+    "pnpm-workspace.yaml",
+    "tsconfig.base.json",
+    "turbo.json"
+  ],
+  "stats": {
+    "fileCount": 111,
+    "routeCount": 0,
+    "apiCount": 0,
+    "testCount": 13,
+    "riskyCount": 30
+  }
+}

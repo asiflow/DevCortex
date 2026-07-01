@@ -1,0 +1,38 @@
+# DevCortex workspace config — see .cortex/quality-constitution.md
+# Managed file: edits are honored, but keep it valid against CortexConfigSchema.
+schemaVersion: 1
+mode: passive
+privacy: local-only
+risk:
+  protectedPaths:
+    - "**/middleware.{ts,tsx,js,jsx,mjs,cjs}"
+    - "**/middleware/**"
+    - "**/auth/**"
+    - "**/*auth*.{ts,tsx,js,jsx}"
+    - "**/billing/**"
+    - "**/*billing*.{ts,tsx,js,jsx}"
+    - "**/migrations/**"
+    - "**/migrate/**"
+    - "**/*.migration.{ts,js,sql}"
+    - "**/.env"
+    - "**/.env.*"
+    - "**/secrets/**"
+    - "**/*secret*"
+  floors:
+    auth: high
+    billing: high
+    database: high
+    security: high
+    devops: high
+gates:
+  typecheck: true
+  lint: true
+  build: true
+  test: true
+  blockUnprovenDone: true
+stackPacks: []
+commands:
+  typecheck: pnpm run typecheck
+  lint: pnpm run lint
+  build: pnpm run build
+  test: pnpm run test

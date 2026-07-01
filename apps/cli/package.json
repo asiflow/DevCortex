@@ -1,0 +1,41 @@
+{
+  "name": "devcortex",
+  "version": "0.1.0",
+  "description": "DevCortex CLI — the cognitive layer for production-grade AI coding agents.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "devcortex": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@devcortex/claude-code": "workspace:*",
+    "@devcortex/codex": "workspace:*",
+    "@devcortex/core": "workspace:*",
+    "@devcortex/cursor": "workspace:*",
+    "@devcortex/daemon": "workspace:*",
+    "@devcortex/github-actions": "workspace:*",
+    "@devcortex/vscode": "workspace:*",
+    "commander": "^15.0.0",
+    "picocolors": "^1.1.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@vitest/coverage-v8": "^2.1.8",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
