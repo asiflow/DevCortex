@@ -1,17 +1,56 @@
 {
   "name": "devcortex",
   "version": "0.1.0",
-  "description": "DevCortex CLI — the cognitive layer for production-grade AI coding agents.",
+  "description": "The cognitive layer for AI coding agents — evidence-backed ship reports, blast-radius protection, and persistent project memory. Works with Claude Code, Codex, Cursor, and any MCP client.",
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
     "devcortex": "./dist/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asiflow/DevCortex.git",
+    "directory": "apps/cli"
+  },
+  "homepage": "https://github.com/asiflow/DevCortex#readme",
+  "bugs": {
+    "url": "https://github.com/asiflow/DevCortex/issues"
+  },
+  "keywords": [
+    "ai",
+    "coding-agent",
+    "claude-code",
+    "cursor",
+    "codex",
+    "mcp",
+    "code-review",
+    "quality-gate",
+    "evidence",
+    "developer-tools",
+    "llm",
+    "ci"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "es-module-lexer": "^1.5.4",
+    "fast-glob": "^3.3.2",
+    "picomatch": "^4.0.2",
+    "yaml": "^2.9.0"
+  },
   "scripts": {
     "build": "tsup",
+    "prepublishOnly": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
@@ -19,7 +58,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest"
   },
-  "dependencies": {
+  "devDependencies": {
     "@devcortex/claude-code": "workspace:*",
     "@devcortex/codex": "workspace:*",
     "@devcortex/core": "workspace:*",
@@ -27,15 +66,13 @@
     "@devcortex/daemon": "workspace:*",
     "@devcortex/github-actions": "workspace:*",
     "@devcortex/vscode": "workspace:*",
-    "commander": "^15.0.0",
-    "picocolors": "^1.1.1",
-    "zod": "^3.25.76"
-  },
-  "devDependencies": {
     "@types/node": "^22.10.2",
     "@vitest/coverage-v8": "^2.1.8",
+    "commander": "^15.0.0",
+    "picocolors": "^1.1.1",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "zod": "^3.25.76"
   }
 }

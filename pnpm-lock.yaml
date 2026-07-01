@@ -41,6 +41,22 @@ importers:
 
   apps/cli:
     dependencies:
+      chokidar:
+        specifier: ^4.0.3
+        version: 4.0.3
+      es-module-lexer:
+        specifier: ^1.5.4
+        version: 1.7.0
+      fast-glob:
+        specifier: ^3.3.2
+        version: 3.3.3
+      picomatch:
+        specifier: ^4.0.2
+        version: 4.0.4
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
+    devDependencies:
       '@devcortex/claude-code':
         specifier: workspace:*
         version: link:../../integrations/claude-code
@@ -62,22 +78,18 @@ importers:
       '@devcortex/vscode':
         specifier: workspace:*
         version: link:../../integrations/vscode
-      commander:
-        specifier: ^15.0.0
-        version: 15.0.0
-      picocolors:
-        specifier: ^1.1.1
-        version: 1.1.1
-      zod:
-        specifier: ^3.25.76
-        version: 3.25.76
-    devDependencies:
       '@types/node':
         specifier: ^22.10.2
         version: 22.20.0
       '@vitest/coverage-v8':
         specifier: ^2.1.8
         version: 2.1.9(vitest@2.1.9(@types/node@22.20.0)(jsdom@25.0.1))
+      commander:
+        specifier: ^15.0.0
+        version: 15.0.0
+      picocolors:
+        specifier: ^1.1.1
+        version: 1.1.1
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(postcss@8.5.16)(typescript@5.9.3)(yaml@2.9.0)
@@ -87,6 +99,9 @@ importers:
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.0)(jsdom@25.0.1)
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
 
   apps/daemon:
     dependencies:
