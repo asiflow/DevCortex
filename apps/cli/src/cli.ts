@@ -12,12 +12,14 @@
 
 import { Command, CommanderError } from 'commander';
 
+import pkg from '../package.json';
 import * as commands from './commands';
 import * as daemon from './daemon';
 import { emit, emitHookOutcome, EXIT_OK, fail, readGlobals, readHookPayload } from './runtime';
 import type { CommandResult, GlobalOptions, HookOutcome, HookPayload } from './runtime';
 
-const VERSION = '0.1.0';
+// Read from package.json so `--version` can never drift from the published version.
+const VERSION = pkg.version;
 
 /** Accumulate a repeatable string option into an array. */
 function collect(value: string, previous: string[]): string[] {

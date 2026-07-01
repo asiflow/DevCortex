@@ -1,6 +1,6 @@
 {
   "name": "@asiflow/devcortex-mcp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "DevCortex MCP server (stdio) — exposes the local, tokenless cortex.* engineering tools (preflight, blast radius, protected-path policy, evidence, ship gate) to any MCP client.",
   "license": "Apache-2.0",
   "type": "module",
