@@ -1,19 +1,46 @@
 {
   "name": "@devcortex/mcp-server",
-  "version": "0.1.0",
-  "description": "DevCortex MCP server (stdio) — exposes cortex.* tools to MCP clients.",
+  "version": "0.1.1",
+  "description": "DevCortex MCP server (stdio) — exposes the local, tokenless cortex.* engineering tools (preflight, blast radius, protected-path policy, evidence, ship gate) to any MCP client.",
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
     "devcortex-mcp": "./dist/server.js"
   },
-  "main": "./dist/server.js",
-  "types": "./dist/server.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asiflow/DevCortex.git",
+    "directory": "packages/mcp-server"
+  },
+  "homepage": "https://github.com/asiflow/DevCortex#readme",
+  "bugs": {
+    "url": "https://github.com/asiflow/DevCortex/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "devcortex",
+    "ai",
+    "coding-agent",
+    "claude",
+    "cursor",
+    "codex",
+    "developer-tools"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
+    "prepublishOnly": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
@@ -22,16 +49,20 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@devcortex/core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "zod": "^4.4.3"
+    "es-module-lexer": "^1.5.4",
+    "fast-glob": "^3.3.2",
+    "picomatch": "^4.0.2",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
+    "@devcortex/core": "workspace:*",
     "@types/node": "^22.10.2",
     "@vitest/coverage-v8": "^2.1.8",
     "eslint": "^9.17.0",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "zod": "^4.4.3"
   }
 }

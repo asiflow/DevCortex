@@ -121,9 +121,8 @@ ship gate). Register it in your client's MCP config:
 {
   "mcpServers": {
     "devcortex-mcp": {
-      "command": "devcortex-mcp",
-      "args": [],
-      "env": {}
+      "command": "npx",
+      "args": ["-y", "@devcortex/mcp-server"]
     }
   }
 }
@@ -131,35 +130,22 @@ ship gate). Register it in your client's MCP config:
 
 The server resolves the repo root from `--root <dir>`, then `DEVCORTEX_ROOT`, then
 the current working directory — so no path config is needed in the common case.
+(`devcortex install` writes the equivalent config using the `devcortex-mcp` binary;
+see below.)
 
-**Getting the `devcortex-mcp` server.** It lives in the `@devcortex/mcp-server`
-package. Today, build it from source and point your client at the built server (Node
-resolves the engine from the workspace, so this runs without a global install):
+**Getting the `devcortex-mcp` server.** It ships as the **`@devcortex/mcp-server`**
+npm package — self-contained, no build step. The `npx` config above needs nothing
+installed. If you'd rather have the `devcortex-mcp` binary on your `PATH` (which is
+what `devcortex install` writes into `.mcp.json` / `.codex/config.toml`), install it
+globally:
 
 ```bash
-git clone https://github.com/asiflow/DevCortex && cd DevCortex
-pnpm install && pnpm -r build
+npm install -g @devcortex/mcp-server
 ```
 
-```json
-{
-  "mcpServers": {
-    "devcortex-mcp": {
-      "command": "node",
-      "args": [
-        "/absolute/path/to/DevCortex/packages/mcp-server/dist/server.js",
-        "--root",
-        "/absolute/path/to/your/project"
-      ]
-    }
-  }
-}
-```
-
-> A standalone `@devcortex/mcp-server` npm package (so `npx @devcortex/mcp-server`
-> just works, and the generated `.mcp.json` needs no path) is on the
-> [roadmap](../ROADMAP.md). The `devcortex` CLI, hooks, Cursor rules, and GitHub
-> Action all work today via `npx devcortex` with no build step.
+> Building from source instead? After `pnpm install && pnpm -r build`, point your
+> client at `node /absolute/path/to/DevCortex/packages/mcp-server/dist/server.js
+> --root /absolute/path/to/your/project`.
 
 ---
 

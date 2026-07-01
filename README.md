@@ -114,10 +114,10 @@ devcortex install github     # GitHub Actions: PR checks that enforce the ship g
 devcortex install --all      # all of the above
 ```
 
-Or point **any MCP client** at the stdio server (`cortex.*` tools):
+Or point **any MCP client** at the stdio server (`cortex.*` tools) — zero install:
 
 ```json
-{ "mcpServers": { "devcortex-mcp": { "command": "devcortex-mcp" } } }
+{ "mcpServers": { "devcortex-mcp": { "command": "npx", "args": ["-y", "@devcortex/mcp-server"] } } }
 ```
 
 📖 **Full setup for every host — [docs/integrations.md](./docs/integrations.md)** —

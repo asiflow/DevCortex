@@ -55,10 +55,10 @@ _829 tests green · strict TypeScript · pnpm + turborepo monorepo._
 
 - **`npx devcortex`** — the CLI is packaged as a self-contained npm binary;
   publish to the registry is the remaining step.
-- **`@devcortex/mcp-server` on npm** — so `npx @devcortex/mcp-server` powers any MCP
-  client with no source build. Today the CLI, hooks, Cursor rules, and GitHub Action
-  work via `npx devcortex`; the MCP server is built from source (see
-  [docs/integrations.md](./docs/integrations.md)).
+- **Publish to npm** — both `devcortex` and `@devcortex/mcp-server` are packaged as
+  self-contained npm bundles (verified via clean-install tarball tests); pushing them
+  to the registry is the remaining step, after which `npx devcortex` and
+  `npx @devcortex/mcp-server` work with zero setup.
 - **More stack packs** — Next.js ships today; Python/FastAPI, Go, and generic
   Node/Vite packs are next.
 - **Richer demo + docs site** — the 30–60s terminal demo (`demo/demo.tape`) and a
