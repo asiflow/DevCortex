@@ -103,14 +103,25 @@ devcortex preflight "add subscription billing"   # risk + blast radius + context
 devcortex ship                           # evidence-backed ship report (exit 2 when NOT_READY)
 ```
 
-Wire it into your agent so the loop is automatic:
+Then wire it into your agent so the loop is automatic — **one command per host**:
 
 ```bash
-devcortex install claude   # Claude Code hooks + MCP: inject context, protect edits, gate "done"
+devcortex install claude     # Claude Code: lifecycle hooks (preflight · guard · evidence · ship) + MCP
+devcortex install codex      # Codex CLI: AGENTS.md discipline + MCP server
+devcortex install cursor     # Cursor: always-apply rules + MCP server
+devcortex install vscode     # VS Code agent mode: MCP + tasks
+devcortex install github     # GitHub Actions: PR checks that enforce the ship gate
+devcortex install --all      # all of the above
 ```
 
-DevCortex also exposes the engine to any MCP client (`@devcortex/mcp-server`, stdio)
-as `cortex.*` tools, and ships adapters for Codex, Cursor, VS Code, and GitHub Actions.
+Or point **any MCP client** at the stdio server (`cortex.*` tools):
+
+```json
+{ "mcpServers": { "devcortex-mcp": { "command": "devcortex-mcp" } } }
+```
+
+📖 **Full setup for every host — [docs/integrations.md](./docs/integrations.md)** —
+what each command writes, what the hooks do, and how to get the MCP server.
 
 ## Try it in 30 seconds
 

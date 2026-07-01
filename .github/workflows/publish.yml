@@ -1,0 +1,51 @@
+name: Publish
+
+# Publishes the `devcortex` CLI to npm automatically when a v* tag is pushed.
+#
+# One-time setup:
+#   1. Create a npm Granular Access Token (npmjs.com → Access Tokens → Generate →
+#      Granular): Read and write on the `devcortex` package, with "Bypass 2FA"
+#      enabled (so CI can publish without a one-time code).
+#   2. Add it as a repo secret named NPM_TOKEN
+#      (Settings → Secrets and variables → Actions → New repository secret).
+#
+# To release: bump apps/cli/package.json version, commit, then
+#   git tag v0.1.2 && git push origin v0.1.2
+# The tag push triggers this workflow, which publishes that version.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    name: publish devcortex to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # enables npm provenance (verified build attestation)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4 # version comes from the packageManager field
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm -r build
+
+      - name: Publish
+        run: pnpm --filter devcortex publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
