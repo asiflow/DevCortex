@@ -11,12 +11,17 @@ mode, and any MCP client.
 [![CI](https://github.com/asiflow/DevCortex/actions/workflows/ci.yml/badge.svg)](https://github.com/asiflow/DevCortex/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/devcortex?color=00c853&label=npm)](https://www.npmjs.com/package/devcortex)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
+[![Tests](https://img.shields.io/badge/tests-829%20passing-00c853.svg)](#quality)
+
+<br/>
+
+<img src="./demo/demo.gif" alt="DevCortex: the ship gate flips a hallucinated 'done' from NOT_READY to READY" width="640" />
 
 </div>
 
 ---
 
-## The problem, in one screen
+## Your agent said "done." Did it actually work?
 
 AI coding agents generate impressive code — then hallucinate "done" without proof.
 DevCortex runs the gate. Same command, before and after:
@@ -51,25 +56,44 @@ Passed (1)
 The difference is **evidence**. `devcortex ship` exits non-zero on `NOT_READY`, so it
 drops straight into CI, pre-commit, and your agent's "am I done?" check.
 
-> Run it yourself: `bash demo/demo.sh` (the exact NOT_READY → READY story above, live).
+## How it works
 
-## What it does today
+DevCortex is **not another AI coding agent**. It's a local-first layer that sits
+*between you and the agent you already use*, running a tight
+**remember → protect → verify → ship** loop:
 
-DevCortex is **not another AI coding agent**. It's a local-first cognitive layer on
-top of the agent you already use. Three things, working now:
+```mermaid
+flowchart LR
+  A["Your AI agent<br/>writes code"] --> B(("DevCortex"))
+  B -->|remember| M[["Project brain<br/>memory · features · decisions"]]
+  B -->|protect| P["Blast radius +<br/>guarded edits"]
+  B -->|verify| V["Evidence ledger +<br/>quality gate"]
+  V -->|"READY / NOT_READY"| S["Ship report"]
+  M -.context.-> A
+  P -.warnings.-> A
+  S -.next step.-> A
+```
 
-- **Ship reports with evidence.** `devcortex ship` runs your repo's *own* gates
-  (typecheck / lint / build / test) plus route/env checks, and refuses to mark work
-  "done" until every required check passes — with the proof attached.
-- **Project memory.** A durable `.cortex/` brain (memory, feature, and decision
-  ledgers) so your agent stops forgetting what it built, why, and what not to break.
-- **Blast-radius protection.** `devcortex preflight "<task>"` shows what a change
-  touches (auth, billing, routes, data) *before* you write it; guarded mode blocks
-  edits to protected paths — with an explanation, never silently.
+- **Remember** — a durable `.cortex/` brain (memory, feature, and decision ledgers)
+  so the agent stops forgetting what it built, why, and what not to break.
+- **Protect** — `devcortex preflight "<task>"` shows what a change touches (auth,
+  billing, routes, data) *before* you write it; guarded mode blocks edits to
+  protected paths with an explanation, never silently.
+- **Verify** — the evidence ledger refuses to let the agent claim "done" until the
+  repo's *own* gates (typecheck / lint / build / test) actually pass.
+- **Ship** — a single evidence-backed verdict you (and CI) can trust.
 
-Everything runs **locally and tokenless-by-default**: the heavy analysis happens
-*outside* your agent's context, so only a small, actionable instruction comes back
-and it doesn't burn your tokens.
+Deep cognition happens **locally and outside your agent's context**, so only a small,
+actionable instruction comes back — it doesn't burn your tokens.
+
+## The local dashboard
+
+`devcortex dashboard` serves a live view of every project's ship-readiness, failing
+checks, risks, feature ledger, and architecture — all on `127.0.0.1`, no cloud.
+
+<div align="center">
+<img src="./docs/dashboard.png" alt="DevCortex local dashboard — ship-readiness gauge, failed checks, risks, feature ledger, architecture map" width="860" />
+</div>
 
 ## Install
 
@@ -88,12 +112,12 @@ devcortex install claude   # Claude Code hooks + MCP: inject context, protect ed
 DevCortex also exposes the engine to any MCP client (`@devcortex/mcp-server`, stdio)
 as `cortex.*` tools, and ships adapters for Codex, Cursor, VS Code, and GitHub Actions.
 
-## Try it from source
+## Try it in 30 seconds
 
 ```bash
 git clone https://github.com/asiflow/DevCortex && cd DevCortex
 pnpm install && pnpm -r build
-bash demo/demo.sh                        # the live NOT_READY → READY demo
+bash demo/demo.sh                        # the live NOT_READY → READY demo above
 ```
 
 See [`docs/getting-started.md`](./docs/getting-started.md) for the full loop run
@@ -102,8 +126,14 @@ end-to-end against the bundled `fixtures/sample-next-app`.
 ## What works now vs. what's planned
 
 See **[ROADMAP.md](./ROADMAP.md)** — it separates the shipping Core (this repo) from
-the deeper gates, learning loop, and the paid Premium Brain / hosted tier that are on
-the way. DevCortex is built **production-grade from day one** — no MVP placeholders.
+the deeper gates, learning loop, and the paid Premium Brain / hosted Cloud tiers.
+DevCortex is built **production-grade from day one** — no MVP placeholders.
+
+## Quality
+
+Strict TypeScript · **829 tests passing** · pnpm + turborepo monorepo. Every push is
+gated by CI (build · typecheck · lint · test). The `devcortex` CLI publishes as a
+self-contained npm bundle.
 
 ## Security & trust model
 
