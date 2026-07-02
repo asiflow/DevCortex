@@ -186,6 +186,10 @@ export interface HookPayload {
   command?: string;
   /** PostToolUse only: the tool's own result object (stdout / stderr / exit code) */
   toolResponse?: Record<string, unknown>;
+  /** absolute path of the host session transcript (Claude Code `transcript_path`) */
+  transcriptPath?: string;
+  /** host session identifier (Claude Code `session_id`) */
+  sessionId?: string;
 }
 
 /** Outcome of a host hook: whether to block, the machine payload, and an explanation. */
@@ -202,20 +206,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-/**
- * Read the hook payload from stdin and normalize it to a {@link HookPayload}.
- * Resolves to `{}` for empty / whitespace input; THROWS on malformed JSON so the
- * caller's fail-open wrapper degrades to passive. Stdin is read to EOF with a
- * bounded safety timeout so a hook can never hang the host agent.
- */
-export async function readHookPayload(): Promise<HookPayload> {
-  const raw = await readStdin();
-  const trimmed = raw.trim();
-  if (trimmed.length === 0) return {};
-
-  const parsed: unknown = JSON.parse(trimmed);
-  if (!isRecord(parsed)) return {};
-
+/** Normalize a parsed hook payload object to the {@link HookPayload} slice. */
+export function normalizeHookPayload(parsed: Record<string, unknown>): HookPayload {
   const payload: HookPayload = {};
   const toolName = parsed.tool_name;
   if (typeof toolName === 'string' && toolName.trim().length > 0) payload.toolName = toolName;
@@ -231,7 +223,32 @@ export async function readHookPayload(): Promise<HookPayload> {
   const toolResponse = parsed.tool_response;
   if (isRecord(toolResponse)) payload.toolResponse = toolResponse;
 
+  const transcriptPath = parsed.transcript_path;
+  if (typeof transcriptPath === 'string' && transcriptPath.trim().length > 0) {
+    payload.transcriptPath = transcriptPath;
+  }
+  const sessionId = parsed.session_id;
+  if (typeof sessionId === 'string' && sessionId.trim().length > 0) {
+    payload.sessionId = sessionId;
+  }
   return payload;
+}
+
+/**
+ * Read the hook payload from stdin and normalize it to a {@link HookPayload}.
+ * Resolves to `{}` for empty / whitespace input; THROWS on malformed JSON so the
+ * caller's fail-open wrapper degrades to passive. Stdin is read to EOF with a
+ * bounded safety timeout so a hook can never hang the host agent.
+ */
+export async function readHookPayload(): Promise<HookPayload> {
+  const raw = await readStdin();
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) return {};
+
+  const parsed: unknown = JSON.parse(trimmed);
+  if (!isRecord(parsed)) return {};
+
+  return normalizeHookPayload(parsed);
 }
 
 /** Read process stdin to EOF as UTF-8, with a bounded safety timeout. */
