@@ -31,6 +31,16 @@
 // content against what is already on disk to decide "unchanged" vs "would
 // change", so every builder here MUST be a stable pure function. YAML is emitted
 // with line-wrapping disabled so long `run:` commands never reflow between runs.
+//
+// Spec deviations (justified):
+//   (a) Spec WS-2 called for a separate `devcortex/ship` commit-status API write.
+//       The `ship-check` job already surfaces as a required-able GitHub status
+//       check on its own, making a duplicate Statuses-API write redundant (YAGNI).
+//       Dropped.
+//   (b) Spec wrote `ship --json --ci`; the `--ci` flag does not exist on
+//       `cmdShip` and is not needed — the workflow runs plain `ship --json`. The
+//       composite action is a pure gate; the PR comment logic lives only in the
+//       workflow, not in the action.
 // ============================================================================
 
 import { stringify } from 'yaml';
@@ -75,6 +85,13 @@ export const DEFAULT_RUNNER = 'ubuntu-latest';
 
 export const CHECKOUT_ACTION = 'actions/checkout@v4';
 export const SETUP_NODE_ACTION = 'actions/setup-node@v4';
+export const UPLOAD_ARTIFACT_ACTION = 'actions/upload-artifact@v4';
+export const GITHUB_SCRIPT_ACTION = 'actions/github-script@v7';
+
+/** Filename the ship-check job writes the JSON report to before uploading. */
+export const SHIP_JSON_FILE = 'devcortex-ship.json';
+/** HTML comment used as the sticky PR comment marker (prefix match). */
+export const SHIP_COMMENT_MARKER = '<!-- devcortex-ship-report -->';
 
 // --- Check model ------------------------------------------------------------
 
@@ -203,20 +220,115 @@ function buildCheckJob(check: DevCortexCheck): Record<string, unknown> {
   };
 }
 
+// --- Ship-check PR comment script -------------------------------------------
+
+/**
+ * Returns the deterministic JS string executed by `actions/github-script` to
+ * create or update a sticky PR comment with the DevCortex ship report.
+ *
+ * Field bindings (ShipReport from @devcortex/core — verified 2026-07-02):
+ *   report.status  → ShipReport.status (ShipStatus: READY | READY_WITH_WARNINGS | NOT_READY)
+ *   report.passed  → ShipReport.passed  (CheckResult[]) — count of passing checks
+ *   report.blocked → ShipReport.blocked (CheckResult[]) — count of blocking checks
+ *   data.blocked   → top-level boolean from cmdShip (blockUnprovenDone result)
+ *   data.reasons   → top-level string[] from cmdShip
+ * Note: ShipReport has no `score` field; passed/blocked counts are used instead.
+ */
+export function buildShipCommentScript(): string {
+  return [
+    `const fs = require('fs');`,
+    `const marker = '${SHIP_COMMENT_MARKER}';`,
+    `let data = null;`,
+    `try { data = JSON.parse(fs.readFileSync('${SHIP_JSON_FILE}', 'utf8')); } catch { data = null; }`,
+    `const report = data && data.report ? data.report : {};`,
+    `const status = report.status || 'UNKNOWN';`,
+    `const emoji = status === 'READY' ? '🟢' : status === 'READY_WITH_WARNINGS' ? '🟡' : '🔴';`,
+    `const passed = Array.isArray(report.passed) ? report.passed.length : '—';`,
+    `const blocked = Array.isArray(report.blocked) ? report.blocked.length : '—';`,
+    `const reasons = Array.isArray(data && data.reasons) ? data.reasons : [];`,
+    `const lines = [marker, '## ' + emoji + ' DevCortex ship report', '', '**Status:** ' + status + '   **Passed:** ' + passed + '   **Blocked:** ' + blocked, ''];`,
+    `if (data && data.blocked) { lines.push('**Blocked — unproven done:**'); for (const r of reasons.slice(0, 10)) lines.push('- ' + r); lines.push(''); }`,
+    `lines.push('_Full report in the devcortex-ship-report workflow artifact._');`,
+    `const body = lines.join('\\n');`,
+    `const { data: comments } = await github.rest.issues.listComments({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, per_page: 100 });`,
+    `const existing = comments.find((c) => c.body && c.body.startsWith(marker));`,
+    `if (existing) { await github.rest.issues.updateComment({ owner: context.repo.owner, repo: context.repo.repo, comment_id: existing.id, body }); }`,
+    `else { await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body }); }`,
+  ].join('\n');
+}
+
+// --- Ship-check dedicated job builder ----------------------------------------
+
+/**
+ * Builds the ship-check job with the full PR-native ship-report pipeline:
+ *   1. Run `devcortex ship --json` (continue-on-error so later steps always run)
+ *   2. Upload the JSON file as a workflow artifact
+ *   3. Post / update a sticky PR comment (same-repo PRs only — fork-safe)
+ *   4. Append a human-readable summary to the GitHub step summary
+ *   5. Enforce: fail the job iff ship returned non-zero
+ *
+ * The composite action (`buildShipCheckActionObject`) remains a pure gate so
+ * teams that only want `uses: devcortex/ship-check` are not forced to accept
+ * the comment step. The comment logic lives only here.
+ */
+function buildShipCheckJob(check: DevCortexCheck): Record<string, unknown> {
+  return {
+    name: check.name,
+    'runs-on': DEFAULT_RUNNER,
+    steps: [
+      ...checkoutAndBuildSteps(),
+      {
+        name: `Run ${DEVCORTEX_CLI_BIN} ${check.cliCommand} (JSON)`,
+        id: 'ship',
+        'continue-on-error': true,
+        run: `${checkRunCommand(check)} --json > ${SHIP_JSON_FILE}`,
+      },
+      {
+        name: 'Upload ship report artifact',
+        if: 'always()',
+        uses: UPLOAD_ARTIFACT_ACTION,
+        with: { name: 'devcortex-ship-report', path: SHIP_JSON_FILE, 'if-no-files-found': 'ignore' },
+      },
+      {
+        name: 'Comment ship report',
+        if: "always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository",
+        uses: GITHUB_SCRIPT_ACTION,
+        with: { script: buildShipCommentScript() },
+      },
+      {
+        name: 'Ship report to job summary',
+        if: 'always()',
+        shell: 'bash',
+        run: `{ echo '## DevCortex ship report'; echo '\`\`\`json'; cat ${SHIP_JSON_FILE} 2>/dev/null || echo '{"error":"no report produced"}'; echo '\`\`\`'; } >> "$GITHUB_STEP_SUMMARY"`,
+      },
+      {
+        name: 'Enforce ship gate',
+        if: "steps.ship.outcome == 'failure'",
+        shell: 'bash',
+        run: 'echo "devcortex ship exited non-zero (NOT_READY or error) — failing the check." && exit 1',
+      },
+    ],
+  };
+}
+
 // --- Workflow builder --------------------------------------------------------
 
 /**
  * Builds the GitHub Actions workflow document as a plain object: one job per
  * DevCortex check. Pure and deterministic.
+ *
+ * Workflow-level `permissions` follow least-privilege: `contents: read` for
+ * checkout, `pull-requests: write` for the sticky PR comment in ship-check.
  */
 export function buildWorkflowObject(): Record<string, unknown> {
   const jobs: Record<string, unknown> = {};
   for (const check of DEVCORTEX_CHECKS) {
-    jobs[check.id] = buildCheckJob(check);
+    jobs[check.id] = check.id === 'ship-check' ? buildShipCheckJob(check) : buildCheckJob(check);
   }
   return {
     name: WORKFLOW_NAME,
     on: buildWorkflowTrigger(),
+    permissions: { contents: 'read', 'pull-requests': 'write' },
     jobs,
   };
 }

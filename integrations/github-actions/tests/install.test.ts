@@ -7,6 +7,7 @@ import { DevCortexError } from '@devcortex/core';
 import {
   buildShipCheckActionObject,
   buildShipCheckActionYaml,
+  buildShipCommentScript,
   buildWorkflowObject,
   buildWorkflowYaml,
   checkRunCommand,
@@ -92,10 +93,16 @@ describe('workflow template', () => {
       expect(runs).toContain('npm ci');
       expect(runs).toContain('npm run build');
 
-      // The devcortex command is the final step of the job.
-      const lastRun = runs[runs.length - 1];
-      expect(lastRun).toBe(checkRunCommand(check));
-      expect(lastRun).toMatch(/^npx devcortex /);
+      if (check.id === 'ship-check') {
+        // ship-check runs ship --json > file (not the bare command) and has
+        // additional summary + enforce steps after; verify CLI is present.
+        expect(runs.some((r) => r.startsWith(checkRunCommand(check)))).toBe(true);
+      } else {
+        // The devcortex command is the final step of the job.
+        const lastRun = runs[runs.length - 1];
+        expect(lastRun).toBe(checkRunCommand(check));
+        expect(lastRun).toMatch(/^npx devcortex /);
+      }
     }
   });
 
@@ -120,6 +127,53 @@ describe('workflow template', () => {
     const obj = buildWorkflowObject();
     const parsed = parseYaml(buildWorkflowYaml());
     expect(Object.keys(obj.jobs as Record<string, unknown>)).toEqual(Object.keys(parsed.jobs));
+  });
+
+  // --- Task 7: PR-native ship report ---
+
+  it('workflow declares least-privilege permissions', () => {
+    const wf = buildWorkflowObject() as Record<string, any>;
+    expect(wf.permissions).toEqual({ contents: 'read', 'pull-requests': 'write' });
+  });
+
+  it('ship-check job comments before enforcing, fork-safe', () => {
+    const yamlText = buildWorkflowYaml();
+    expect(yamlText).toContain('continue-on-error: true');
+    expect(yamlText).toContain('devcortex-ship-report');           // artifact + comment marker name
+    expect(yamlText).toContain('<!-- devcortex-ship-report -->');  // sticky marker
+    expect(yamlText).toContain("github.event.pull_request.head.repo.full_name == github.repository");
+    expect(yamlText.indexOf('Comment ship report')).toBeLessThan(yamlText.indexOf('Enforce ship gate'));
+  });
+
+  it('remains deterministic', () => {
+    expect(buildWorkflowYaml()).toBe(buildWorkflowYaml());
+  });
+
+  // Step 5 (YAML validity): parse the generated YAML and verify ship-check steps are in order.
+  // ESM package cannot use require('./dist/...'); vitest is the canonical route.
+  it('ship-check job steps parse correctly and appear in the required order', () => {
+    const wf = parseYaml(buildWorkflowYaml());
+    const job = wf.jobs['ship-check'] as any;
+    const names = (job.steps as any[]).map((s: any) => s.name as string);
+    const commentIdx = names.indexOf('Comment ship report');
+    const summaryIdx = names.indexOf('Ship report to job summary');
+    const enforceIdx = names.indexOf('Enforce ship gate');
+    expect(commentIdx).toBeGreaterThan(-1);
+    expect(summaryIdx).toBeGreaterThan(-1);
+    expect(enforceIdx).toBeGreaterThan(-1);
+    expect(commentIdx).toBeLessThan(enforceIdx);
+    expect(summaryIdx).toBeLessThan(enforceIdx);
+  });
+
+  it('buildShipCommentScript returns a deterministic string containing the sticky marker', () => {
+    const script = buildShipCommentScript();
+    expect(typeof script).toBe('string');
+    expect(script).toContain('<!-- devcortex-ship-report -->');
+    expect(script).toContain('report.status');
+    expect(script).toContain('report.passed');
+    expect(script).toContain('report.blocked');
+    // Must be deterministic.
+    expect(buildShipCommentScript()).toBe(script);
   });
 });
 
