@@ -21,3 +21,6 @@ export {
   compareRuns,
 } from './runs';
 export type { ArtifactKey, RunComparison } from './runs';
+
+export { parseTranscript, distillTranscript } from './distill';
+export type { TranscriptDigest, DistillOutcome } from './distill';

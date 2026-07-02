@@ -1,0 +1,7 @@
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"Fix the failing date test"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu_1","name":"Bash","input":{"command":"npm test -- date.test.ts"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_1","content":"FAIL date.test.ts — expected 2 got 3","is_error":true}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu_2","name":"Edit","input":{"file_path":"/repo/src/date.ts","old_string":"a","new_string":"b"}}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu_3","name":"Bash","input":{"command":"npm test -- date.test.ts"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_3","content":"PASS date.test.ts"}]}}
+{"garbage":"unknown-line-shape-must-be-skipped"}
