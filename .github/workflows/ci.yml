@@ -11,6 +11,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  premium-leak-guard:
+    name: premium leak guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refuse premium/cloud paid code on the public tree
+        # Paid-tier packages live ONLY on the local `premium` branch (never
+        # pushed). If they ever become git-tracked here, fail the build before
+        # anything else runs.
+        run: |
+          if git ls-files | grep -E '^packages/(premium-brain|cloud-client)/' ; then
+            echo '::error::Paid-tier code is git-tracked on the public branch.' && exit 1
+          fi
+          echo 'leak guard ok'
+
   build-test:
     name: build · typecheck · lint · test
     runs-on: ubuntu-latest

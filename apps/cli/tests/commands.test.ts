@@ -9,7 +9,7 @@
 import { spawnSync } from 'node:child_process';
 import { generateKeyPairSync, sign } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -485,6 +485,95 @@ describe('premium commands', () => {
     const result = await commands.cmdPremiumStatus(g(), { publicKeysPem: [pubPem], fetcher });
     expect(calls).toHaveLength(0);
     expect(result.data).toMatchObject({ ok: true, license: { state: 'valid' } });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// OSS-untouched guarantee (spec PB-0 acceptance, Task 8). The free product
+// must behave IDENTICALLY whether or not any premium state exists on the
+// machine — premium is purely additive. These tests pin that guarantee so a
+// future "wire premium into an OSS command" change that alters free-tier
+// behavior is a test failure, not a silent product change.
+
+describe('OSS-untouched guarantee (spec PB-0)', () => {
+  let home: string;
+  let savedHome: string | undefined;
+
+  beforeEach(async () => {
+    savedHome = process.env.DEVCORTEX_HOME;
+    home = await mkdtemp(path.join(tmpdir(), 'devcortex-pb0-'));
+    process.env.DEVCORTEX_HOME = home;
+    tmpRoots.push(home);
+  });
+
+  afterEach(() => {
+    if (savedHome === undefined) delete process.env.DEVCORTEX_HOME;
+    else process.env.DEVCORTEX_HOME = savedHome;
+  });
+
+  /** Simulate an installed premium bundle under the (sandboxed) home dir. */
+  async function installPremiumFixture(): Promise<void> {
+    const bundleDir = path.join(premiumDir(), '0.1.0');
+    await mkdir(bundleDir, { recursive: true });
+    await writeFile(path.join(bundleDir, 'index.js'), 'module.exports = {};\n', 'utf8');
+    await writeFile(
+      installedManifestPath(),
+      `${JSON.stringify({ version: '0.1.0', contract: SUPPORTED_PREMIUM_CONTRACT }, null, 2)}\n`,
+      'utf8',
+    );
+  }
+
+  it('with an empty DEVCORTEX_HOME, premium reports none/not-installed and leaves zero footprint', async () => {
+    const result = await commands.cmdPremiumStatus({ root: home, json: false });
+    expect(result.data).toEqual({
+      ok: true,
+      license: { state: 'none' },
+      bundle: { installed: false },
+    });
+    expect(result.exitCode ?? 0).toBe(0);
+    // "Untouched" cuts both ways: the free-tier status probe must not CREATE
+    // any ~/.devcortex state as a side effect either.
+    await expect(readdir(home)).resolves.toEqual([]);
+  });
+
+  it('cmdBrief and cmdShip behave identically whether or not a premium dir exists', async () => {
+    // Two identical fixture workspaces: ship runs exactly once per workspace,
+    // so the with/without comparison can never be polluted by a first ship
+    // run's own report landing in the workspace.
+    const wsBrief = await makeFixtureWorkspace();
+    const wsShipWithout = await makeFixtureWorkspace();
+    tmpRoots.push(wsBrief, wsShipWithout);
+
+    const briefWithout = await commands.cmdBrief({ root: wsBrief, json: false });
+    const shipWithout = await commands.cmdShip({ root: wsShipWithout, json: false });
+
+    await installPremiumFixture();
+
+    const briefWith = await commands.cmdBrief({ root: wsBrief, json: false });
+    const shipWith = await commands.cmdShip({ root: wsBrief, json: false });
+
+    // Brief: byte-identical output (composeSessionBrief is deterministic).
+    expect(briefWith.human).toBe(briefWithout.human);
+    expect(briefWith.data).toEqual(briefWithout.data);
+
+    // Ship: compare the stable decision surface — generatedAt stamps and the
+    // uuid-suffixed report path legitimately differ between any two runs.
+    const shipStable = (r: { data: unknown; exitCode?: number }) => {
+      const d = r.data as {
+        ok: boolean;
+        blocked: boolean;
+        reasons: unknown;
+        report: { status: string };
+      };
+      return {
+        ok: d.ok,
+        blocked: d.blocked,
+        reasons: d.reasons,
+        status: d.report.status,
+        exitCode: r.exitCode ?? 0,
+      };
+    };
+    expect(shipStable(shipWith)).toEqual(shipStable(shipWithout));
   });
 });
 
