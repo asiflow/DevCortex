@@ -10,3 +10,5 @@
 export { compileIntent } from './intent';
 export { compileContext } from './context';
 export type { ContextLedgers } from './context';
+export { composeSessionBrief } from './brief';
+export type { SessionBrief } from './brief';
