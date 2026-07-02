@@ -12,6 +12,11 @@
 export const PREMIUM_PUBKEYS: readonly string[] = [
   // !!! DEV/STAGING KEY — NOT THE PRODUCTION KEY. DO NOT SHIP GA WITH THIS. !!!
   //
+  // The "DEV/STAGING KEY" banner line above is LOAD-BEARING: the release gate
+  // in tests/premium-pubkey-ga-gate.test.ts (run by `prepublishOnly`) matches
+  // it to block any >= 0.3.0 publish that still carries this entry. Do not
+  // reword it; remove it only via the ceremony below.
+  //
   // This keypair was generated 2026-07-02 solely to prove the issue → activate
   // → install → status path end-to-end (devcortex-cloud docs/premium-e2e.md).
   // Its PRIVATE half lives only in a local gitignored .env.local and is

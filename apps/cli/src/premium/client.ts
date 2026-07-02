@@ -35,13 +35,41 @@ const REFRESH_WINDOW_MS = 7 * DAY_MS;
 /** `maybeRefresh` gives the cloud this long before giving up silently. */
 const REFRESH_TIMEOUT_MS = 3_000;
 
-/** Cloud base URL: `$DEVCORTEX_CLOUD_URL` (trailing slashes stripped) or prod. */
+/** Hosts allowed to use plain http: local dev + the premium E2E runbook. */
+const PLAINTEXT_OK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+/**
+ * Cloud base URL: `$DEVCORTEX_CLOUD_URL` (trailing slashes stripped) or prod.
+ *
+ * SECURITY: a plain-http remote is refused outright — the wire carries the
+ * license file + signature (the bearer) and returns a code-executed premium
+ * bundle, so cleartext would hand both to any on-path attacker. http is
+ * allowed only for localhost / 127.0.0.1 / [::1] (local dev, E2E runbook).
+ */
 export function cloudBaseUrl(): string {
   const override = process.env.DEVCORTEX_CLOUD_URL;
   if (typeof override === 'string' && override.trim().length > 0) {
-    return override.trim().replace(/\/+$/, '');
+    const url = override.trim().replace(/\/+$/, '');
+    assertCloudUrlEncrypted(url);
+    return url;
   }
   return 'https://cloud.devcortex.dev';
+}
+
+function assertCloudUrlEncrypted(url: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return; // not even a URL — fetch() refuses it before any cleartext request exists
+  }
+  if (parsed.protocol === 'https:') return;
+  if (parsed.protocol === 'http:' && PLAINTEXT_OK_HOSTS.has(parsed.hostname)) return;
+  throw new DevCortexError(
+    'CONFIG_INVALID',
+    `DEVCORTEX_CLOUD_URL must use https (got ${url}) — plaintext would expose your license ` +
+      'and the downloaded premium bundle. http is allowed only for localhost / 127.0.0.1 / [::1].',
+  );
 }
 
 /**
@@ -72,14 +100,41 @@ function isLicenseFileShaped(value: unknown): value is LicenseFile {
 
 // --- error mapping ------------------------------------------------------------
 
-/** Best-effort extraction of the cloud's `{ ok, error: { message } }` body. */
+/** Longest server-controlled detail we will ever surface (hostile bodies are unbounded). */
+const SERVER_TEXT_MAX_CHARS = 200;
+
+/**
+ * Neutralize server-controlled text before it enters a user-facing message:
+ * strip ASCII control characters (0x00-0x1F and 0x7F — including ESC, so a
+ * hostile/MITM cloud cannot inject ANSI/OSC terminal escape sequences),
+ * collapse the gaps to single spaces, and cap the length (`…` marks
+ * truncation). Our own static strings are NEVER routed through here — only
+ * text that arrived on the wire.
+ */
+export function sanitizeServerText(s: string): string {
+  const cleaned = s
+    .replace(/[\u0000-\u001f\u007f]+/g, ' ')
+    .replace(/ {2,}/g, ' ')
+    .trim();
+  return cleaned.length > SERVER_TEXT_MAX_CHARS
+    ? `${cleaned.slice(0, SERVER_TEXT_MAX_CHARS)}…`
+    : cleaned;
+}
+
+/**
+ * Best-effort extraction of the cloud's `{ ok, error: { message } }` body.
+ * The detail is wire-controlled, so it is ALWAYS sanitized here at the
+ * boundary — no caller ever sees raw server error text.
+ */
 async function errorDetailOf(res: Response): Promise<string> {
   try {
     const body: unknown = await res.json();
     if (isRecord(body)) {
       const error = body.error;
-      if (typeof error === 'string') return error;
-      if (isRecord(error) && typeof error.message === 'string') return error.message;
+      if (typeof error === 'string') return sanitizeServerText(error);
+      if (isRecord(error) && typeof error.message === 'string') {
+        return sanitizeServerText(error.message);
+      }
     }
   } catch {
     // Non-JSON error body — the status alone will have to do.

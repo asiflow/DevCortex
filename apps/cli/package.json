@@ -50,7 +50,7 @@
   },
   "scripts": {
     "build": "tsup",
-    "prepublishOnly": "tsup",
+    "prepublishOnly": "vitest run tests/premium-pubkey-ga-gate.test.ts && tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",

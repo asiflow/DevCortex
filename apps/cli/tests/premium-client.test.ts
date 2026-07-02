@@ -26,6 +26,7 @@ import {
   downloadPremium,
   maybeRefresh,
   refreshRemote,
+  sanitizeServerText,
 } from '../src/premium/client';
 import type { Fetcher } from '../src/premium/client';
 import { canonicalJson, verifyLicenseFile } from '../src/premium/license';
@@ -146,6 +147,123 @@ describe('cloudBaseUrl', () => {
   it('honors DEVCORTEX_CLOUD_URL and strips trailing slashes', () => {
     process.env.DEVCORTEX_CLOUD_URL = 'http://localhost:3000/';
     expect(cloudBaseUrl()).toBe('http://localhost:3000');
+  });
+
+  // A plain-http cloud URL would send the license file + signature in
+  // cleartext AND fetch a code-executed bundle over an interceptable channel.
+  it('rejects a plain-http remote override with a clean CONFIG_INVALID error', () => {
+    process.env.DEVCORTEX_CLOUD_URL = 'http://evil.example';
+    const err = (() => {
+      try {
+        cloudBaseUrl();
+        return null;
+      } catch (e: unknown) {
+        return e;
+      }
+    })();
+    expect(err).toBeInstanceOf(DevCortexError);
+    expect((err as DevCortexError).code).toBe('CONFIG_INVALID');
+    expect((err as DevCortexError).message).toContain('https');
+    expect((err as DevCortexError).message).toContain('http://evil.example');
+  });
+
+  it.each(['http://localhost:3000', 'http://127.0.0.1:3000', 'http://[::1]:3000'])(
+    'allows plain http for local development (%s)',
+    (url) => {
+      process.env.DEVCORTEX_CLOUD_URL = url;
+      expect(cloudBaseUrl()).toBe(url);
+    },
+  );
+
+  it('allows any https override', () => {
+    process.env.DEVCORTEX_CLOUD_URL = 'https://staging.devcortex.dev';
+    expect(cloudBaseUrl()).toBe('https://staging.devcortex.dev');
+  });
+
+  it('rejects an http URL whose hostname merely STARTS with localhost', () => {
+    process.env.DEVCORTEX_CLOUD_URL = 'http://localhost.evil.example';
+    expect(() => cloudBaseUrl()).toThrowError(DevCortexError);
+  });
+
+  it('never dials a plain-http remote: downloadPremium throws before the fetcher runs', async () => {
+    process.env.DEVCORTEX_CLOUD_URL = 'http://evil.example';
+    const { calls, fetcher } = recordingFetcher(() => jsonResponse(200, {}));
+    await expect(downloadPremium(makeLicense(), { fetcher })).rejects.toBeInstanceOf(
+      DevCortexError,
+    );
+    expect(calls).toHaveLength(0);
+  });
+});
+
+// --- sanitizeServerText -----------------------------------------------------------
+
+describe('sanitizeServerText', () => {
+  it('passes ordinary server text through unchanged', () => {
+    expect(sanitizeServerText('license is unknown or has been revoked')).toBe(
+      'license is unknown or has been revoked',
+    );
+  });
+
+  it('strips ANSI SGR escapes so the terminal never interprets server bytes', () => {
+    const out = sanitizeServerText('\x1b[31mHACK\x1b[0m');
+    expect(out).not.toContain('\x1b');
+    expect(out).toContain('HACK');
+  });
+
+  it('strips the full control range (0x00-0x1F, 0x7F) including OSC/BEL/DEL', () => {
+    const out = sanitizeServerText('a\x00b\x07c\x1b]0;owned\x07d\x7fe');
+    for (let code = 0; code <= 0x1f; code += 1) {
+      expect(out).not.toContain(String.fromCharCode(code));
+    }
+    expect(out).not.toContain('\x7f');
+  });
+
+  it('collapses control runs to single spaces and trims the edges', () => {
+    expect(sanitizeServerText('\r\n  boom \t\r\n')).toBe('boom');
+    expect(sanitizeServerText('a\r\n\t b')).toBe('a b');
+  });
+
+  it('caps length at 200 chars and appends … when truncated', () => {
+    const out = sanitizeServerText('x'.repeat(10_000));
+    expect(out).toHaveLength(201);
+    expect(out.endsWith('…')).toBe(true);
+    expect(sanitizeServerText('y'.repeat(200))).toBe('y'.repeat(200)); // exactly at the cap: untouched
+  });
+});
+
+// --- server-controlled error text is sanitized before it reaches the user ---------
+
+describe('hostile cloud error bodies', () => {
+  it('a hostile 10KB ANSI-laced {error.message} surfaces clean, bounded, escape-free', async () => {
+    const license = makeLicense();
+    const hostile = '\x1b[31mHACK\x1b[0m' + 'A'.repeat(10_000);
+    const { fetcher } = recordingFetcher(() =>
+      jsonResponse(500, { ok: false, error: { code: 'internal', message: hostile } }),
+    );
+    const err = await downloadPremium(license, { fetcher })
+      .then(() => null)
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(DevCortexError);
+    const msg = (err as DevCortexError).message;
+    expect(msg).toContain('HACK'); // the useful part of the detail survives
+    expect(msg).not.toContain('\x1b'); // no escape byte ever reaches the terminal
+    expect(msg).toContain('…'); // truncation is visible, not silent
+    expect(msg.length).toBeLessThan(320); // 200-char detail cap + our static text only
+  });
+
+  it('sanitizes a string-typed {error} body on the 401 license path too', async () => {
+    const license = makeLicense();
+    const { fetcher } = recordingFetcher(() =>
+      jsonResponse(401, { ok: false, error: 'revoked\x1b]0;owned\x07 license' }),
+    );
+    const err = await refreshRemote(license, { fetcher })
+      .then(() => null)
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(DevCortexError);
+    const msg = (err as DevCortexError).message;
+    expect(msg).not.toContain('\x1b');
+    expect(msg).not.toContain('\x07');
+    expect(msg).toContain('devcortex premium activate'); // our own static guidance is untouched
   });
 });
 
