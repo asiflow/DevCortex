@@ -51,16 +51,12 @@ The complete local **remember → protect → verify → ship** loop.
 - `devcortex daemon` / `dashboard` — optional local daemon + web dashboard on
   `127.0.0.1`.
 
-_829 tests green · strict TypeScript · pnpm + turborepo monorepo._
+_973 tests green · strict TypeScript · pnpm + turborepo monorepo._
 
 ---
 
 ## 🔜 Next (open-source)
 
-- **Publish to npm** — both `@asiflow/devcortex` (the CLI) and `@asiflow/devcortex-mcp`
-  (the MCP server) are packaged as self-contained npm bundles, verified via
-  clean-install tarball tests; publishing to the registry is the remaining step, after
-  which `npx @asiflow/devcortex` and `npx @asiflow/devcortex-mcp` work with zero setup.
 - **More stack packs** — Next.js ships today; Python/FastAPI, Go, and generic
   Node/Vite packs are next.
 - **Richer demo + docs site** — the 30–60s terminal demo (`demo/demo.tape`) and a

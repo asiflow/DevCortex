@@ -11,7 +11,7 @@ mode, and any MCP client.
 [![CI](https://github.com/asiflow/DevCortex/actions/workflows/ci.yml/badge.svg)](https://github.com/asiflow/DevCortex/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@asiflow/devcortex?color=00c853&label=npm)](https://www.npmjs.com/package/@asiflow/devcortex)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
-[![Tests](https://img.shields.io/badge/tests-829%20passing-00c853.svg)](#quality)
+[![Tests](https://img.shields.io/badge/tests-973%20passing-00c853.svg)](#quality)
 
 <br/>
 
@@ -155,7 +155,7 @@ DevCortex is built **production-grade from day one** — no MVP placeholders.
 
 ## Quality
 
-Strict TypeScript · **829 tests passing** · pnpm + turborepo monorepo. Every push is
+Strict TypeScript · **973 tests passing** · pnpm + turborepo monorepo. Every push is
 gated by CI (build · typecheck · lint · test). The `devcortex` CLI publishes as a
 self-contained npm bundle.
 
