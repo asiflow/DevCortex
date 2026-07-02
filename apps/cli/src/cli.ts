@@ -112,6 +112,13 @@ function buildProgram(): Command {
       return runAction(this, (g) => commands.cmdScan(g));
     });
 
+  // --- brief ---
+  withGlobals(program.command('brief'))
+    .description('Print the compact session-start project brief (risks, features, decisions, protected paths)')
+    .action(function (this: Command) {
+      return runAction(this, (g) => commands.cmdBrief(g));
+    });
+
   // --- preflight ---
   withGlobals(program.command('preflight'))
     .description('Compile risk + blast radius + intent + context for a task')

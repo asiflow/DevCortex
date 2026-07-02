@@ -44,13 +44,23 @@ async function exists(path: string): Promise<boolean> {
 // ---------------------------------------------------------------------------
 
 describe('builders', () => {
-  it('buildSettingsHooks emits one group for each of the four lifecycle events', () => {
+  it('includes a SessionStart brief shim, passive (canBlock=false)', () => {
+    const brief = HOOK_SHIMS.find((s) => s.event === 'SessionStart');
+    expect(brief).toBeDefined();
+    expect(brief!.fileName).toBe('devcortex-brief.sh');
+    expect(brief!.canBlock).toBe(false);
+    const hooks = buildSettingsHooks();
+    expect(hooks.SessionStart).toHaveLength(1);
+  });
+
+  it('buildSettingsHooks emits one group for each of the five lifecycle events', () => {
     const hooks = buildSettingsHooks();
     expect(Object.keys(hooks).sort()).toEqual(
-      ['PostToolUse', 'PreToolUse', 'Stop', 'UserPromptSubmit'].sort(),
+      ['PostToolUse', 'PreToolUse', 'SessionStart', 'Stop', 'UserPromptSubmit'].sort(),
     );
 
-    // UserPromptSubmit + Stop are not tool-scoped → no matcher.
+    // SessionStart + UserPromptSubmit + Stop are not tool-scoped → no matcher.
+    expect(hooks.SessionStart?.[0]).not.toHaveProperty('matcher');
     expect(hooks.UserPromptSubmit?.[0]).not.toHaveProperty('matcher');
     expect(hooks.Stop?.[0]).not.toHaveProperty('matcher');
 
@@ -123,20 +133,20 @@ describe('builders', () => {
 // ---------------------------------------------------------------------------
 
 describe('installClaude — fresh install', () => {
-  it('creates settings.json, .mcp.json and four executable fail-open shims', async () => {
+  it('creates settings.json, .mcp.json and five executable fail-open shims', async () => {
     const result = await installClaude(dir);
     expect(result.status).toBe('applied');
     if (result.status !== 'applied') throw new Error('expected applied');
 
-    // Two config files + four shims = six managed files, all created.
-    expect(result.files).toHaveLength(6);
+    // Two config files + five shims = seven managed files, all created.
+    expect(result.files).toHaveLength(7);
     expect(result.files.every((f) => f.action === 'create')).toBe(true);
 
     // settings.json shape.
     const settings = await readJson(settingsPath(dir));
     const hooks = settings.hooks as Record<string, Array<{ matcher?: string; hooks: unknown[] }>>;
     expect(Object.keys(hooks).sort()).toEqual(
-      ['PostToolUse', 'PreToolUse', 'Stop', 'UserPromptSubmit'].sort(),
+      ['PostToolUse', 'PreToolUse', 'SessionStart', 'Stop', 'UserPromptSubmit'].sort(),
     );
     expect(hooks.PreToolUse?.[0]?.matcher).toBe('Edit|Write|Bash');
 

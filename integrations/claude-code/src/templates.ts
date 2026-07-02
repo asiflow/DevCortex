@@ -9,6 +9,13 @@
 // Determinism is load-bearing: `installClaude` compares freshly-built content
 // against what is already on disk to decide "unchanged" vs "would change", so
 // every builder here MUST be a stable pure function of its inputs.
+//
+// Hook set managed by this module (lifecycle order):
+//  - SessionStart  → `devcortex brief`            (inject CORTEX BRIEF at session start)
+//  - UserPromptSubmit → `devcortex preflight --json` (inject CORTEX PREFLIGHT)
+//  - PreToolUse (Edit|Write|Bash) → guarded-mode protected-path check
+//  - PostToolUse (Edit|Write|Bash) → evidence recording + graph delta
+//  - Stop → `devcortex ship --json` (emit SHIP STATUS, block unproven done)
 // ============================================================================
 
 // --- Identity / location constants -----------------------------------------
@@ -40,7 +47,7 @@ export const MUTATING_TOOL_MATCHER = 'Edit|Write|Bash';
 
 // --- Hook lifecycle model ---------------------------------------------------
 
-export const HOOK_EVENTS = ['UserPromptSubmit', 'PreToolUse', 'PostToolUse', 'Stop'] as const;
+export const HOOK_EVENTS = ['SessionStart', 'UserPromptSubmit', 'PreToolUse', 'PostToolUse', 'Stop'] as const;
 export type HookEvent = (typeof HOOK_EVENTS)[number];
 
 /**
@@ -68,12 +75,20 @@ export interface HookShimSpec {
 
 /**
  * The complete DevCortex hook set, per spec section 8:
+ *  - SessionStart → `devcortex brief` (inject CORTEX BRIEF at session start)
  *  - UserPromptSubmit → `devcortex preflight --json` (inject CORTEX PREFLIGHT)
  *  - PreToolUse (Edit|Write|Bash) → guarded-mode protected-path check
  *  - PostToolUse (Edit|Write|Bash) → evidence recording + graph delta
  *  - Stop → `devcortex ship --json` (emit SHIP STATUS, block unproven done)
  */
 export const HOOK_SHIMS: readonly HookShimSpec[] = [
+  {
+    event: 'SessionStart',
+    fileName: 'devcortex-brief.sh',
+    cliCommand: `${DEVCORTEX_CLI_BIN} brief`,
+    canBlock: false,
+    description: 'Injects the compact CORTEX BRIEF project block at session start.',
+  },
   {
     event: 'UserPromptSubmit',
     fileName: 'devcortex-preflight.sh',

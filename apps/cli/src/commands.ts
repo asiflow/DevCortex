@@ -17,6 +17,7 @@ import {
   classifyRisk,
   compileContext,
   compileIntent,
+  composeSessionBrief,
   CONTEXT_DEPTHS,
   defaultConfig,
   depthForRisk,
@@ -335,6 +336,13 @@ export async function cmdScan(g: GlobalOptions): Promise<CommandResult> {
   await mkdir(paths.cortexDir, { recursive: true });
   await saveGraph(g.root, graph);
   return { data: graph, human: renderScan(graph) };
+}
+
+// --- brief ------------------------------------------------------------------
+
+export async function cmdBrief(g: GlobalOptions): Promise<CommandResult> {
+  const brief = await composeSessionBrief(g.root);
+  return { data: { ok: true, brief }, human: brief.text };
 }
 
 // --- preflight --------------------------------------------------------------
