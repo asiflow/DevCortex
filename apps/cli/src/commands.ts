@@ -7,6 +7,7 @@
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
+import { performance } from 'node:perf_hooks';
 
 import {
   analyzeBlastRadius,
@@ -62,6 +63,7 @@ import {
   WORKFLOW_IDS,
 } from '@devcortex/core';
 import type {
+  BlastRadius,
   ContextDepth,
   CortexCommands,
   CortexConfig,
@@ -354,6 +356,15 @@ export async function cmdPreflight(g: GlobalOptions, task: string): Promise<Comm
     throw new DevCortexError('INTERNAL', 'preflight requires a non-empty task description.');
   }
 
+  // Latency budget for the preflight pipeline.
+  // Default: 400ms cold path (WS-1 design pt 3). The warm/150ms path lands with
+  // daemon-socket reuse in a later phase and must not appear in user-facing docs this phase.
+  const rawBudget = Number(process.env.DEVCORTEX_PREFLIGHT_BUDGET_MS ?? '400');
+  const budgetMs = Number.isFinite(rawBudget) && rawBudget > 0 ? rawBudget : 400;
+  const startedAt = performance.now();
+  const elapsed = (): number => performance.now() - startedAt;
+  let degraded = false;
+
   const config = await loadConfig(g.root);
   const graph = await loadOrScanGraph(g.root);
   const ledgers = makeLedgers(g.root);
@@ -362,14 +373,39 @@ export async function cmdPreflight(g: GlobalOptions, task: string): Promise<Comm
   const packs = matchPacks(graph.stack);
   const intent = compileIntent(trimmed, graph, packs, config);
 
-  const candidatePaths = relevantFiles(graph, trimmed).map((file) => file.path);
-  const blast = analyzeBlastRadius(graph, candidatePaths, config);
+  // Degrade ladder — checked between pipeline phases. risk and intent are never skipped.
+  // If elapsed > 60% of budget after compileIntent → skip analyzeBlastRadius.
+  let blast: BlastRadius | null;
+  if (elapsed() > budgetMs * 0.6) {
+    degraded = true;
+    blast = null;
+  } else {
+    const candidatePaths = relevantFiles(graph, trimmed).map((file) => file.path);
+    blast = analyzeBlastRadius(graph, candidatePaths, config);
+  }
 
-  const depth = depthForRisk(risk.riskLevel);
+  // If elapsed > 85% of budget before compileContext → force depth 'tiny'.
+  let depth: ContextDepth;
+  if (elapsed() > budgetMs * 0.85) {
+    degraded = true;
+    depth = 'tiny';
+  } else {
+    depth = depthForRisk(risk.riskLevel);
+  }
+
   const context = await compileContext(intent, graph, ledgers, depth);
 
   return {
-    data: { ok: true, task: trimmed, risk, blastRadius: blast, intent, context },
+    data: {
+      ok: true,
+      task: trimmed,
+      risk,
+      blastRadius: blast,
+      intent,
+      context,
+      degraded,
+      elapsedMs: Math.round(elapsed()),
+    },
     human: renderPreflight({ task: trimmed, risk, blast, intent, context }),
   };
 }

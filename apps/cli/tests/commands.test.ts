@@ -22,10 +22,15 @@ const FIXTURE_JSONL = fileURLToPath(
   ),
 );
 
-/** Creates a temp directory, copies the Task 4 transcript fixture in as t.jsonl, and returns the root. */
+/**
+ * Creates a temp directory, copies the Task 4 transcript fixture in as t.jsonl,
+ * and initializes the workspace (.cortex/ scaffold) so commands that require an
+ * initialized workspace (e.g. cmdPreflight) work without a live repo.
+ */
 async function makeFixtureWorkspace(): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), 'devcortex-cli-'));
   await copyFile(FIXTURE_JSONL, path.join(root, 't.jsonl'));
+  await commands.cmdInit({ root, json: false }, { force: false });
   return root;
 }
 
@@ -60,5 +65,29 @@ describe('cmdDistill', () => {
   it('cmdDistill with no transcript resolves passively', async () => {
     const outcome = await commands.cmdDistill({ root: '/tmp/nowhere-xyz', json: true }, {});
     expect(outcome.blocked).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+describe('cmdPreflight', () => {
+  it('cmdPreflight degrades under an impossible budget instead of blowing it', async () => {
+    const root = await makeFixtureWorkspace();
+    tmpRoots.push(root);
+    process.env.DEVCORTEX_PREFLIGHT_BUDGET_MS = '1';
+    try {
+      const result = await commands.cmdPreflight({ root, json: true }, 'change the date parser');
+      expect(result.data).toMatchObject({ ok: true, degraded: true });
+      expect((result.data as { blastRadius: unknown }).blastRadius).toBeNull();
+    } finally {
+      delete process.env.DEVCORTEX_PREFLIGHT_BUDGET_MS;
+    }
+  });
+
+  it('cmdPreflight reports degraded:false under a generous budget', async () => {
+    const root = await makeFixtureWorkspace();
+    tmpRoots.push(root);
+    const result = await commands.cmdPreflight({ root, json: true }, 'change the date parser');
+    expect(result.data).toMatchObject({ degraded: false });
   });
 });

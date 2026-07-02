@@ -111,7 +111,8 @@ function listOrDash(values: readonly string[]): string {
 export interface PreflightView {
   task: string;
   risk: RiskClassification;
-  blast: BlastRadius;
+  /** null when blast radius was skipped because the pipeline exceeded the latency budget. */
+  blast: BlastRadius | null;
   intent: IntentContract;
   context: ContextPack;
 }
@@ -125,19 +126,25 @@ export function renderPreflight(view: PreflightView): string {
     `${label('Signals')}${listOrDash(risk.signals)}`,
     `${label('Goal')}${intent.goal}`,
     '',
-    `${pc.bold('Blast radius')}  severity ${riskTag(blast.severity)}`,
-    `  ${label('routes')}${listOrDash(blast.affectedRoutes)}`,
-    `  ${label('components')}${listOrDash(blast.affectedComponents)}`,
-    `  ${label('api')}${listOrDash(blast.affectedApi)}`,
-    `  ${label('tables')}${listOrDash(blast.affectedTables)}`,
-    `  ${label('auth')}${yesNo(blast.affectsAuth)}`,
-    `  ${label('billing')}${yesNo(blast.affectsBilling)}`,
-    `  ${label('env vars')}${listOrDash(blast.affectedEnvVars)}`,
-    `  ${label('checks')}${listOrDash(blast.requiredChecks)}`,
   ];
 
-  if (blast.fragileAreas.length > 0) {
-    lines.push(`  ${label('fragile')}${blast.fragileAreas.join(', ')}`);
+  if (blast === null) {
+    lines.push(`${pc.bold('Blast radius')}  ${pc.dim('(blast radius skipped — over time budget)')}`);
+  } else {
+    lines.push(
+      `${pc.bold('Blast radius')}  severity ${riskTag(blast.severity)}`,
+      `  ${label('routes')}${listOrDash(blast.affectedRoutes)}`,
+      `  ${label('components')}${listOrDash(blast.affectedComponents)}`,
+      `  ${label('api')}${listOrDash(blast.affectedApi)}`,
+      `  ${label('tables')}${listOrDash(blast.affectedTables)}`,
+      `  ${label('auth')}${yesNo(blast.affectsAuth)}`,
+      `  ${label('billing')}${yesNo(blast.affectsBilling)}`,
+      `  ${label('env vars')}${listOrDash(blast.affectedEnvVars)}`,
+      `  ${label('checks')}${listOrDash(blast.requiredChecks)}`,
+    );
+    if (blast.fragileAreas.length > 0) {
+      lines.push(`  ${label('fragile')}${blast.fragileAreas.join(', ')}`);
+    }
   }
 
   lines.push(
