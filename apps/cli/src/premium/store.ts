@@ -77,16 +77,27 @@ export interface InstalledManifest {
   contract: number;
 }
 
+/**
+ * Whether a bundle version is safe to use as a single directory name under the
+ * premium dir. Positive allowlist: an alphanumeric first character, then any of
+ * `A-Za-z0-9 . _ + -`. This rejects the empty string, `.`, `..`, any
+ * leading-dot (hidden dir), path separators (`/`, `\`), whitespace, and
+ * embedded null bytes — everything that could escape the premium dir or make
+ * `path.join` throw. `installFromTarball` (write) and `isInstalledManifest`
+ * (read) MUST agree, so both call this ONE predicate.
+ */
+export function isValidBundleVersion(version: string): boolean {
+  return /^[A-Za-z0-9][A-Za-z0-9._+-]*$/.test(version);
+}
+
 function isInstalledManifest(value: unknown): value is InstalledManifest {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
   const record = value as Record<string, unknown>;
   return (
     typeof record.version === 'string' &&
-    record.version.trim().length > 0 &&
-    // `installFromTarball` never writes path-y versions; refuse them on read
-    // too, so the loader can never resolve an entry outside the premium dir.
-    !/[/\\]/.test(record.version) &&
-    !record.version.includes('..') &&
+    // Refuse path-y versions on read too, so the loader can never resolve an
+    // entry outside the premium dir from a hand-edited manifest.
+    isValidBundleVersion(record.version) &&
     typeof record.contract === 'number' &&
     Number.isFinite(record.contract)
   );

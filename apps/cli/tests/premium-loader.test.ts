@@ -186,16 +186,20 @@ describe('loadPremiumBrain', () => {
       status: 'not-installed',
     });
 
-    // A hand-edited path-traversal version must never resolve an entry
-    // outside the premium dir — the manifest guard refuses it on read.
-    await writeFile(
-      installedManifestPath(),
-      JSON.stringify({ version: '../../evil', contract: SUPPORTED_PREMIUM_CONTRACT }),
-      'utf8',
-    );
-    expect(await loadPremiumBrain({ publicKeysPem: [pubPem] })).toMatchObject({
-      status: 'not-installed',
-    });
+    // Hand-edited path-y versions must never resolve an entry outside the
+    // premium dir — the manifest guard refuses them on read. The read-side
+    // allowlist is kept consistent with the install-time guard, so `.` (which
+    // path.join would collapse to the premium dir itself) is refused too.
+    for (const evil of ['../../evil', '.', '.hidden']) {
+      await writeFile(
+        installedManifestPath(),
+        JSON.stringify({ version: evil, contract: SUPPORTED_PREMIUM_CONTRACT }),
+        'utf8',
+      );
+      expect(await loadPremiumBrain({ publicKeysPem: [pubPem] })).toMatchObject({
+        status: 'not-installed',
+      });
+    }
   });
 
   it('refuses a contract mismatch with an actionable reason', async () => {
@@ -288,5 +292,45 @@ describe('installFromTarball', () => {
     await expect(installFromTarball(tgz, '../evil')).rejects.toBeInstanceOf(DevCortexError);
     await expect(installFromTarball(tgz, 'a/b')).rejects.toBeInstanceOf(DevCortexError);
     await expect(installFromTarball(tgz, '')).rejects.toBeInstanceOf(DevCortexError);
+  });
+
+  it('rejects reserved, leading-dot, and null-byte versions (positive allowlist)', async () => {
+    const tgz = await fabricateTgz(OK_INDEX_JS);
+    // `.` and `..` are path references; a leading dot is a hidden dir; internal
+    // whitespace survives the input trim; a null byte would otherwise make
+    // path.join throw a raw (non-DevCortex) error. The allowlist turns all of
+    // these into ONE clean DevCortexError, and none writes a manifest.
+    const nullByte = `x${String.fromCharCode(0)}y`;
+    for (const bad of ['.', '..', '.hidden', 'x y', nullByte]) {
+      await expect(installFromTarball(tgz, bad)).rejects.toBeInstanceOf(DevCortexError);
+    }
+    expect(existsSync(installedManifestPath())).toBe(false);
+  });
+
+  it('a dirty-dir re-install cannot report false success on a stale entry file', async () => {
+    // 1. A good v5.0.0 install lands package/dist/index.js.
+    const good = await fabricateTgz(OK_INDEX_JS, '5.0.0');
+    await installFromTarball(good, '5.0.0');
+    const entry = path.join(premiumDir(), '5.0.0', 'package', 'dist', 'index.js');
+    expect(existsSync(entry)).toBe(true);
+
+    // 2. Re-install a v5.0.0 tarball that LACKS package/dist/index.js. `tar -x`
+    //    MERGES into an existing dir and never deletes files absent from the
+    //    archive, so without the clean-slate rm the sanity check would pass on
+    //    the STALE index.js and rewrite the manifest — a false success while
+    //    old code keeps running. It must instead throw the clean sanity error.
+    const badStage = await mkdtemp(path.join(tmpdir(), 'devcortex-stale-'));
+    await mkdir(path.join(badStage, 'package'), { recursive: true });
+    await writeFile(path.join(badStage, 'package', 'readme.txt'), 'no dist here', 'utf8');
+    const badTgz = path.join(badStage, 'bad.tgz');
+    spawnSync('tar', ['-czf', badTgz, '-C', badStage, 'package']);
+
+    const err = await installFromTarball(badTgz, '5.0.0')
+      .then(() => null)
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(DevCortexError);
+    expect((err as DevCortexError).message).toContain('package/dist/index.js');
+    // The stale entry was wiped by the clean slate — no leftover can fake it.
+    expect(existsSync(entry)).toBe(false);
   });
 });

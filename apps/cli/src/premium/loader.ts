@@ -24,7 +24,7 @@
 
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -32,6 +32,7 @@ import { DevCortexError } from '@devcortex/core';
 
 import { verifyLicenseFile } from './license';
 import {
+  isValidBundleVersion,
   premiumDir,
   readInstalledManifest,
   readLicenseFile,
@@ -148,25 +149,38 @@ export async function loadPremiumBrain(opts?: {
  * premium bundle all throw a clean `DevCortexError` — and the manifest is
  * only written AFTER the extracted layout passes its sanity check, so a
  * failed install never masquerades as an installed one.
+ *
+ * The install directory is wiped BEFORE extraction: `tar -x` merges into an
+ * existing dir and never removes files absent from the archive, so a re-install
+ * of the same version over a prior one could otherwise leave a stale
+ * `package/dist/index.js` that fakes the sanity check. A failed re-install thus
+ * removes the previous install of that version — the honest outcome (the user
+ * is told it failed) versus silently running old code as new.
  */
 export async function installFromTarball(
   tgzPath: string,
   version: string,
 ): Promise<{ installDir: string }> {
-  // The version names a directory under premiumDir — refuse anything that
-  // could escape it (or nest surprise subdirectories) before touching disk.
+  // The version names a directory under premiumDir — a positive allowlist
+  // (alphanumeric-led, then `. _ + -`) rejects the empty string, `.`/`..`, any
+  // leading-dot, path separators, whitespace, and null bytes before we touch
+  // disk. Shared with the manifest read guard so both sides agree.
   const clean = version.trim();
-  if (clean.length === 0 || /[/\\]/.test(clean) || clean.includes('..')) {
+  if (!isValidBundleVersion(clean)) {
     throw new DevCortexError(
       'INTERNAL',
-      `Invalid bundle version "${version}" — expected a plain version like 1.2.3.`,
+      `Invalid bundle version "${version}" — expected a plain version like 1.2.3 (letters, digits, and \`. _ + -\`).`,
     );
   }
   if (!existsSync(tgzPath)) {
     throw new DevCortexError('INTERNAL', `Cannot read bundle "${tgzPath}": no such file.`);
   }
 
+  // Clean slate before extraction (see banner). `clean` is allowlist-validated,
+  // so installDir is provably a direct child of premiumDir — safe to remove
+  // recursively; `force` makes a first-time install (no dir yet) a no-op.
   const installDir = path.join(premiumDir(), clean);
+  await rm(installDir, { recursive: true, force: true });
   await mkdir(installDir, { recursive: true });
 
   const tar = spawnSync('tar', ['-xzf', tgzPath, '-C', installDir]);
