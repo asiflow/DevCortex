@@ -15,7 +15,8 @@
 //  - UserPromptSubmit → `devcortex preflight --json` (inject CORTEX PREFLIGHT)
 //  - PreToolUse (Edit|Write|Bash) → guarded-mode protected-path check
 //  - PostToolUse (Edit|Write|Bash) → evidence recording + graph delta
-//  - Stop → `devcortex ship --json` (emit SHIP STATUS, block unproven done)
+//  - Stop (1) → `devcortex distill --json`  (distill transcript → run record + memory, passive)
+//  - Stop (2) → `devcortex ship --json`     (emit SHIP STATUS, block unproven done)
 // ============================================================================
 
 // --- Identity / location constants -----------------------------------------
@@ -79,7 +80,8 @@ export interface HookShimSpec {
  *  - UserPromptSubmit → `devcortex preflight --json` (inject CORTEX PREFLIGHT)
  *  - PreToolUse (Edit|Write|Bash) → guarded-mode protected-path check
  *  - PostToolUse (Edit|Write|Bash) → evidence recording + graph delta
- *  - Stop → `devcortex ship --json` (emit SHIP STATUS, block unproven done)
+ *  - Stop (1) → `devcortex distill --json` (distill transcript → run record + memory, passive)
+ *  - Stop (2) → `devcortex ship --json` (emit SHIP STATUS, block unproven done)
  */
 export const HOOK_SHIMS: readonly HookShimSpec[] = [
   {
@@ -111,6 +113,13 @@ export const HOOK_SHIMS: readonly HookShimSpec[] = [
     matcher: MUTATING_TOOL_MATCHER,
     canBlock: false,
     description: 'Records evidence and a project-graph delta after Edit / Write / Bash tool calls.',
+  },
+  {
+    event: 'Stop',
+    fileName: 'devcortex-distill.sh',
+    cliCommand: `${DEVCORTEX_CLI_BIN} distill --json`,
+    canBlock: false,
+    description: 'Distills the session transcript into a run record + observed memory before the ship gate.',
   },
   {
     event: 'Stop',

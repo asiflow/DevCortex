@@ -192,6 +192,16 @@ function buildProgram(): Command {
       return runHookAction(this, (g, payload) => commands.cmdRecordEvidence(g, payload));
     });
 
+  // --- distill (Stop hook; fail-open; runs before the ship gate) ---
+  withGlobals(program.command('distill'))
+    .description('Stop hook: distill the session transcript into a run record + observed memory (fail-open)')
+    .option('--transcript <path>', 'transcript path (otherwise read from the hook payload stdin)')
+    .action(function (this: Command) {
+      const o = this.opts();
+      const transcriptOverride = typeof o.transcript === 'string' ? o.transcript : undefined;
+      return runHookAction(this, (g, payload) => commands.cmdDistill(g, { ...payload, transcriptOverride }));
+    });
+
   // --- daemon ---
   const daemonCmd = withGlobals(program.command('daemon')).description(
     'Local daemon: watch the repo and serve the API + dashboard on 127.0.0.1',

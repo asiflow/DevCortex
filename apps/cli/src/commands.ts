@@ -22,6 +22,7 @@ import {
   defaultConfig,
   depthForRisk,
   DevCortexError,
+  distillTranscript,
   evaluateToolCall,
   FEATURE_STATUSES,
   GATE_FAMILIES,
@@ -1524,6 +1525,26 @@ export async function cmdRecordEvidence(
     blocked: false,
     data: { ok: true, recorded: true, evidenceId: item.id, kind: item.kind, status: item.status },
   };
+}
+
+// --- distill (Stop hook; fail-open) -----------------------------------------
+//
+// `distill` backs the generated devcortex-distill.sh hook shim (see
+// @devcortex/claude-code templates). It runs before the ship gate on every
+// Stop event, extracting a run record and observed memory candidates from the
+// session transcript. The command is always passive (never blocks) and is
+// wrapped by the same fail-open `runHookAction` wrapper as guard / record-evidence.
+
+export async function cmdDistill(
+  g: GlobalOptions,
+  payload: HookPayload & { transcriptOverride?: string },
+): Promise<HookOutcome> {
+  const transcript = payload.transcriptOverride ?? payload.transcriptPath;
+  if (transcript === undefined) {
+    return { blocked: false, data: { ok: true, skipped: 'no transcript in payload' } };
+  }
+  const outcome = await distillTranscript(g.root, transcript);
+  return { blocked: false, data: { ok: true, ...outcome } };
 }
 
 // re-export emit so cli.ts has a single import surface for the wiring layer.

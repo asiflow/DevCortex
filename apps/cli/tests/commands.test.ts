@@ -6,13 +6,59 @@
 // we never touch the filesystem for option resolution.
 // ============================================================================
 
-import { describe, expect, it } from 'vitest';
+import { copyFile, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { afterEach, describe, expect, it } from 'vitest';
 import * as commands from '../src/commands';
+
+// The transcript-basic.jsonl fixture from Task 4 (packages/core/src/runs/__fixtures__/).
+const FIXTURE_JSONL = fileURLToPath(
+  new URL(
+    '../../../packages/core/src/runs/__fixtures__/transcript-basic.jsonl',
+    import.meta.url,
+  ),
+);
+
+/** Creates a temp directory, copies the Task 4 transcript fixture in as t.jsonl, and returns the root. */
+async function makeFixtureWorkspace(): Promise<string> {
+  const root = await mkdtemp(path.join(tmpdir(), 'devcortex-cli-'));
+  await copyFile(FIXTURE_JSONL, path.join(root, 't.jsonl'));
+  return root;
+}
+
+const tmpRoots: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(tmpRoots.splice(0).map((r) => rm(r, { recursive: true, force: true })));
+});
+
+// ---------------------------------------------------------------------------
 
 describe('cmdBrief', () => {
   it('cmdBrief returns the brief text and ok:true even when uninitialized', async () => {
     const result = await commands.cmdBrief({ root: '/tmp/not-a-workspace-xyz', json: false });
     expect(result.data).toMatchObject({ ok: true });
     expect(result.human).toContain('devcortex init');
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+describe('cmdDistill', () => {
+  it('cmdDistill never blocks and reports the outcome', async () => {
+    const root = await makeFixtureWorkspace();
+    tmpRoots.push(root);
+    const transcript = path.join(root, 't.jsonl');
+    const outcome = await commands.cmdDistill({ root, json: true }, { transcriptPath: transcript });
+    expect(outcome.blocked).toBe(false);
+    expect(outcome.data).toMatchObject({ ok: true });
+  });
+
+  it('cmdDistill with no transcript resolves passively', async () => {
+    const outcome = await commands.cmdDistill({ root: '/tmp/nowhere-xyz', json: true }, {});
+    expect(outcome.blocked).toBe(false);
   });
 });

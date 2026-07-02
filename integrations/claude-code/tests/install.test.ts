@@ -95,7 +95,7 @@ describe('builders', () => {
   });
 
   it('blocking shims fail open but propagate a deliberate exit-2 block', () => {
-    const ship = HOOK_SHIMS.find((s) => s.event === 'Stop');
+    const ship = HOOK_SHIMS.find((s) => s.fileName === 'devcortex-ship.sh');
     expect(ship).toBeDefined();
     const shim = buildHookShim(ship!);
     expect(shim).toContain('devcortex ship --json');
@@ -104,6 +104,13 @@ describe('builders', () => {
     expect(shim).toContain('exit 2');
     // ...and the catch-all fail-open at the end.
     expect(shim.trimEnd().endsWith('exit 0')).toBe(true);
+  });
+
+  it('orders the two Stop hooks distill-then-ship', () => {
+    const stops = HOOK_SHIMS.filter((s) => s.event === 'Stop').map((s) => s.fileName);
+    expect(stops).toEqual(['devcortex-distill.sh', 'devcortex-ship.sh']);
+    const hooks = buildSettingsHooks();
+    expect(hooks.Stop).toHaveLength(2);
   });
 
   it('mergeSettings is idempotent and strips its own previously-installed groups', () => {
@@ -133,13 +140,13 @@ describe('builders', () => {
 // ---------------------------------------------------------------------------
 
 describe('installClaude — fresh install', () => {
-  it('creates settings.json, .mcp.json and five executable fail-open shims', async () => {
+  it('creates settings.json, .mcp.json and six executable fail-open shims', async () => {
     const result = await installClaude(dir);
     expect(result.status).toBe('applied');
     if (result.status !== 'applied') throw new Error('expected applied');
 
-    // Two config files + five shims = seven managed files, all created.
-    expect(result.files).toHaveLength(7);
+    // Two config files + six shims = eight managed files, all created.
+    expect(result.files).toHaveLength(8);
     expect(result.files.every((f) => f.action === 'create')).toBe(true);
 
     // settings.json shape.
