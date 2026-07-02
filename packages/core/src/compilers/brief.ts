@@ -109,6 +109,13 @@ export async function composeSessionBrief(
   try {
     const feature = new FeatureLedger(root);
     const building = await feature.list((f) => f.status === 'building');
+    // list() surfaces readdir order, which is filesystem-dependent; sort so the
+    // brief is deterministic for identical workspace state: newest first, with
+    // the id as a total-order tiebreak.
+    building.sort((a, b) => {
+      const d = b.updatedAt.localeCompare(a.updatedAt);
+      return d !== 0 ? d : a.id.localeCompare(b.id);
+    });
     const top = building.slice(0, 3);
     if (top.length > 0) {
       blocks.push(['## In-flight features', ...top.map((f) => `- ${f.feature} (${f.id})`), '']);
