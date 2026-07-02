@@ -35,6 +35,10 @@ The complete local **remember → protect → verify → ship** loop.
 - Claude Code lifecycle hooks (`devcortex install claude`).
 - `@asiflow/devcortex-mcp` — the engine as `cortex.*` tools for any MCP client (stdio).
 - Adapters for **Codex**, **Cursor**, **VS Code** agent mode, and a **GitHub Action**.
+- `devcortex brief` + SessionStart hook — a ≤2KB project brief (risks, in-flight features, decisions, protected paths) injected at session start.
+- `devcortex distill` + Stop hook — deterministic transcript distillation into run records and observed project memory (zero manual calls).
+- PR-native ship reports — the GitHub Action posts a sticky ship-report comment, uploads the JSON artifact, and enforces the gate as a required check.
+- Preflight latency budget — per-prompt preflight degrades gracefully (`DEVCORTEX_PREFLIGHT_BUDGET_MS`, default 400ms) instead of slowing the agent.
 
 **MCP governance & privacy**
 - `devcortex mcp` — safe MCP manager (recommend / install read-only / audit).

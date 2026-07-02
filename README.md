@@ -132,6 +132,8 @@ Or point **any MCP client** at the stdio server (`cortex.*` tools) — zero inst
 📖 **Full setup for every host — [docs/integrations.md](./docs/integrations.md)** —
 what each command writes, what the hooks do, and how to get the MCP server.
 
+- **Session brief + transcript memory** — `devcortex brief` injects a ≤2KB evidence-backed project state at Claude Code session start; `devcortex distill` auto-captures run records and observed project memory at session end — both wired automatically by `devcortex install claude`.
+
 ## Try it in 30 seconds
 
 ```bash

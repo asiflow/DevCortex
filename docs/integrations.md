@@ -159,3 +159,21 @@ To remove one, delete its generated files (`.claude/`, `.codex/config.toml`,
 `.cursor/rules/devcortex.mdc`, `.vscode/*`, `.github/workflows/devcortex.yml`) or the
 `DEVCORTEX:BEGIN … DEVCORTEX:END` block inside a shared file (`AGENTS.md`,
 `.codex/config.toml`). Deleting `.cortex/` removes the project brain entirely.
+
+---
+
+## Host capability matrix
+
+| Capability | Claude Code | Cursor | Codex | VS Code agent | GitHub Action |
+|---|---|---|---|---|---|
+| Context injection (brief/preflight) | ✅ SessionStart + UserPromptSubmit hooks | ✅ project rule | ✅ AGENTS.md block | ✅ instructions | — |
+| MCP tools (`cortex.*`) | ✅ `.mcp.json` | ✅ `.cursor/mcp.json` | ✅ `config.toml` | ✅ | — |
+| Blocking gates (guard / ship exit 2) | ✅ PreToolUse + Stop hooks | ⚠️ advisory only (no lifecycle hooks) | ⚠️ advisory only | ⚠️ advisory only | ✅ required PR checks |
+| Transcript distillation (auto-memory) | ✅ Stop hook | — | — | — | — |
+
+DevCortex never overclaims: where a host has no lifecycle hooks, gates are advisory (the agent is instructed to run them) and CI remains the enforcement backstop.
+
+### Ship-status badge
+
+The generated workflow's `ship-check` job doubles as a README badge:
+`![DevCortex ship](https://github.com/<owner>/<repo>/actions/workflows/devcortex.yml/badge.svg)`
