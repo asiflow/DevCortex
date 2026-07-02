@@ -6,8 +6,10 @@
 // we never touch the filesystem for option resolution.
 // ============================================================================
 
+import { spawnSync } from 'node:child_process';
 import { generateKeyPairSync, sign } from 'node:crypto';
-import { copyFile, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,7 +19,13 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import * as commands from '../src/commands';
 import { canonicalJson } from '../src/premium/license';
 import type { LicenseFile, LicensePayload } from '../src/premium/license';
-import { installedManifestPath, licensePath, readLicenseFile } from '../src/premium/store';
+import { SUPPORTED_PREMIUM_CONTRACT } from '../src/premium/loader';
+import {
+  installedManifestPath,
+  licensePath,
+  premiumDir,
+  readLicenseFile,
+} from '../src/premium/store';
 
 // The transcript-basic.jsonl fixture from Task 4 (packages/core/src/runs/__fixtures__/).
 const FIXTURE_JSONL = fileURLToPath(
@@ -219,6 +227,125 @@ describe('premium commands', () => {
     await writeFile(installedManifestPath(), JSON.stringify({ version: '1.2.3' }), 'utf8');
     const result = await commands.cmdPremiumStatus(g());
     expect(result.data).toMatchObject({ bundle: { installed: true, version: '1.2.3' } });
+  });
+
+  // --- premium install (P0 from-file path) --------------------------------
+
+  /** Fabricate an npm-pack-shaped bundle tarball exporting the given contract. */
+  async function fabricateTgz(contract: number): Promise<string> {
+    const stage = await mkdtemp(path.join(tmpdir(), 'devcortex-cli-tgz-'));
+    tmpRoots.push(stage);
+    const dist = path.join(stage, 'package', 'dist');
+    await mkdir(dist, { recursive: true });
+    await writeFile(
+      path.join(stage, 'package', 'package.json'),
+      JSON.stringify({ name: 'devcortex-premium', version: '9.9.9', type: 'module' }),
+      'utf8',
+    );
+    await writeFile(
+      path.join(dist, 'index.js'),
+      `export const PREMIUM_CONTRACT_VERSION = ${contract};\nexport const brain = () => 'premium-ok';\n`,
+      'utf8',
+    );
+    const tgz = path.join(stage, 'bundle.tgz');
+    const tar = spawnSync('tar', ['-czf', tgz, '-C', stage, 'package']);
+    if (tar.status !== 0) throw new Error('test fixture: tar -czf failed');
+    return tgz;
+  }
+
+  async function activate(): Promise<void> {
+    const file = await writeLicenseJson(makeLicense());
+    await commands.cmdPremiumActivate(g(), file, { publicKeysPem: [pubPem] });
+  }
+
+  it('cmdPremiumInstall installs a local tgz and verifies the handshake end-to-end', async () => {
+    await activate();
+    const tgz = await fabricateTgz(SUPPORTED_PREMIUM_CONTRACT);
+    const result = await commands.cmdPremiumInstall(
+      g(),
+      { fromFile: tgz, version: '9.9.9' },
+      { publicKeysPem: [pubPem] },
+    );
+    expect(result.data).toMatchObject({ ok: true, version: '9.9.9', contract: 'ok' });
+    expect(existsSync(path.join(premiumDir(), '9.9.9', 'package', 'dist', 'index.js'))).toBe(true);
+    const manifest: unknown = JSON.parse(await readFile(installedManifestPath(), 'utf8'));
+    expect(manifest).toEqual({ version: '9.9.9', contract: SUPPORTED_PREMIUM_CONTRACT });
+  });
+
+  it('cmdPremiumInstall without --from-file throws the exact remote-install message', async () => {
+    await activate();
+    const err = await commands
+      .cmdPremiumInstall(g(), { version: '9.9.9' }, { publicKeysPem: [pubPem] })
+      .then(() => null)
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(DevCortexError);
+    expect((err as DevCortexError).message).toBe(
+      'remote install requires DevCortex Cloud — pass --from-file for a local bundle',
+    );
+  });
+
+  it('cmdPremiumInstall requires --version alongside --from-file', async () => {
+    await activate();
+    const tgz = await fabricateTgz(SUPPORTED_PREMIUM_CONTRACT);
+    await expect(
+      commands.cmdPremiumInstall(g(), { fromFile: tgz }, { publicKeysPem: [pubPem] }),
+    ).rejects.toThrow(/--version/);
+  });
+
+  it('cmdPremiumInstall refuses without an activated license — and extracts nothing', async () => {
+    const tgz = await fabricateTgz(SUPPORTED_PREMIUM_CONTRACT);
+    await expect(
+      commands.cmdPremiumInstall(
+        g(),
+        { fromFile: tgz, version: '9.9.9' },
+        { publicKeysPem: [pubPem] },
+      ),
+    ).rejects.toThrow(/devcortex premium activate/);
+    expect(existsSync(path.join(premiumDir(), '9.9.9'))).toBe(false);
+  });
+
+  it('cmdPremiumInstall refuses a bundle that fails the post-install handshake', async () => {
+    await activate();
+    const tgz = await fabricateTgz(99);
+    await expect(
+      commands.cmdPremiumInstall(
+        g(),
+        { fromFile: tgz, version: '9.9.9' },
+        { publicKeysPem: [pubPem] },
+      ),
+    ).rejects.toThrow(/contract/i);
+  });
+
+  it('cmdPremiumStatus reports the loader handshake for an installed bundle', async () => {
+    await activate();
+    const tgz = await fabricateTgz(SUPPORTED_PREMIUM_CONTRACT);
+    await commands.cmdPremiumInstall(
+      g(),
+      { fromFile: tgz, version: '9.9.9' },
+      { publicKeysPem: [pubPem] },
+    );
+    const result = await commands.cmdPremiumStatus(g(), { publicKeysPem: [pubPem] });
+    expect(result.data).toMatchObject({
+      ok: true,
+      license: { state: 'valid' },
+      bundle: { installed: true, version: '9.9.9', contract: 'ok' },
+    });
+    expect(result.exitCode ?? 0).toBe(0);
+  });
+
+  it('cmdPremiumStatus surfaces a handshake refusal and still exits 0', async () => {
+    // Bundle manifest present but no license — the handshake refuses.
+    await mkdir(path.dirname(installedManifestPath()), { recursive: true });
+    await writeFile(
+      installedManifestPath(),
+      JSON.stringify({ version: '1.2.3', contract: SUPPORTED_PREMIUM_CONTRACT }),
+      'utf8',
+    );
+    const result = await commands.cmdPremiumStatus(g(), { publicKeysPem: [pubPem] });
+    expect(result.data).toMatchObject({
+      bundle: { installed: true, contract: 'license-invalid' },
+    });
+    expect(result.exitCode ?? 0).toBe(0);
   });
 });
 

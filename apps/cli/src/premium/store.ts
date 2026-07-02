@@ -68,3 +68,47 @@ export async function writeLicenseFile(file: LicenseFile): Promise<void> {
   await writeFile(target, `${JSON.stringify(file, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
   await chmod(target, 0o600);
 }
+
+/** Manifest describing the installed Premium bundle (`premium/installed.json`). */
+export interface InstalledManifest {
+  /** Bundle version — names the install directory `<premiumDir>/<version>`. */
+  version: string;
+  /** Premium contract the installer believed it was installing (informational). */
+  contract: number;
+}
+
+function isInstalledManifest(value: unknown): value is InstalledManifest {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.version === 'string' &&
+    record.version.trim().length > 0 &&
+    // `installFromTarball` never writes path-y versions; refuse them on read
+    // too, so the loader can never resolve an entry outside the premium dir.
+    !/[/\\]/.test(record.version) &&
+    !record.version.includes('..') &&
+    typeof record.contract === 'number' &&
+    Number.isFinite(record.contract)
+  );
+}
+
+/**
+ * Read the installed-bundle manifest. Returns `null` when the file is absent,
+ * unreadable, unparseable, or not manifest-shaped — never throws. The loader
+ * treats every `null` as "not installed"; only `installFromTarball` writes it.
+ */
+export async function readInstalledManifest(): Promise<InstalledManifest | null> {
+  try {
+    const raw = await readFile(installedManifestPath(), 'utf8');
+    const parsed: unknown = JSON.parse(raw);
+    return isInstalledManifest(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Persist the installed-bundle manifest (mkdir -p on the premium dir). */
+export async function writeInstalledManifest(manifest: InstalledManifest): Promise<void> {
+  await mkdir(premiumDir(), { recursive: true });
+  await writeFile(installedManifestPath(), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+}

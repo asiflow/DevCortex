@@ -474,6 +474,23 @@ function buildProgram(): Command {
     .action(function (this: Command, file: string) {
       return runAction(this, (g) => commands.cmdPremiumActivate(g, file));
     });
+  withGlobals(premium.command('install'))
+    .description(
+      'Install the Premium bundle — local tarball via --from-file (remote needs DevCortex Cloud)',
+    )
+    .option('--from-file <tgz>', 'install from a local bundle tarball (npm-pack layout)')
+    .option('--version <version>', 'bundle version being installed, e.g. 1.2.3')
+    .action(function (this: Command) {
+      const opts = this.opts();
+      const fromFile = typeof opts.fromFile === 'string' ? opts.fromFile : undefined;
+      const version = typeof opts.version === 'string' ? opts.version : undefined;
+      return runAction(this, (g) =>
+        commands.cmdPremiumInstall(g, {
+          ...(fromFile !== undefined ? { fromFile } : {}),
+          ...(version !== undefined ? { version } : {}),
+        }),
+      );
+    });
   withGlobals(premium.command('status'))
     .description('Show license state and installed Premium bundle (informational, always exits 0)')
     .action(function (this: Command) {

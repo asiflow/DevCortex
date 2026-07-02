@@ -112,6 +112,7 @@ import {
   renderPlan,
   renderPreflight,
   renderPremiumActivate,
+  renderPremiumInstall,
   renderPremiumStatus,
   renderPrivacyRedact,
   renderPrivacyStatus,
@@ -137,6 +138,7 @@ import type {
 } from './format';
 import { verifyLicenseFile } from './premium/license';
 import type { LicenseFile } from './premium/license';
+import { installFromTarball, loadPremiumBrain } from './premium/loader';
 import { installedManifestPath, readLicenseFile, writeLicenseFile } from './premium/store';
 import {
   EXIT_NOT_READY,
@@ -966,12 +968,89 @@ export async function cmdPremiumActivate(
 }
 
 /**
+ * `premium install` — P0 is the LOCAL path: `--from-file <tgz>` plus
+ * `--version <v>` extract a bundle tarball under the DevCortex home (the
+ * remote download path arrives with DevCortex Cloud). Gate order is
+ * deliberate: an activated, non-expired license is required BEFORE anything
+ * touches disk (grace proceeds with its warning), then `installFromTarball`
+ * extracts + records the manifest, then `loadPremiumBrain` runs as the
+ * post-install acceptance test — a bundle that fails the handshake fails the
+ * install, loudly, with the loader's own refusal reason.
+ *
+ * `opts.publicKeysPem` is the same test/staging-only seam as activate.
+ */
+export async function cmdPremiumInstall(
+  g: GlobalOptions,
+  local: { fromFile?: string; version?: string },
+  opts?: { publicKeysPem?: readonly string[] },
+): Promise<CommandResult> {
+  const fromFile = local.fromFile?.trim() ?? '';
+  if (fromFile.length === 0) {
+    throw new DevCortexError(
+      'INTERNAL',
+      'remote install requires DevCortex Cloud — pass --from-file for a local bundle',
+    );
+  }
+  const version = local.version?.trim() ?? '';
+  if (version.length === 0) {
+    throw new DevCortexError(
+      'INTERNAL',
+      'premium install --from-file also requires --version <version> (the bundle version being installed).',
+    );
+  }
+
+  // License gate — refuse BEFORE extracting anything. Absent and invalid both
+  // point at activation; hard-expired carries the verifier's actionable reason.
+  const stored = await readLicenseFile();
+  const check = stored === null ? null : verifyLicenseFile(stored, opts);
+  if (check === null || check.state === 'invalid') {
+    const why = check?.reason ?? 'No license activated.';
+    throw new DevCortexError(
+      'INTERNAL',
+      `Premium install requires an activated license — run \`devcortex premium activate <license.json>\` first. (${why})`,
+    );
+  }
+  if (check.state === 'expired') {
+    throw new DevCortexError(
+      'INTERNAL',
+      `Premium install refused: ${check.reason ?? 'the license has expired past its grace window.'}`,
+    );
+  }
+
+  const abs = path.isAbsolute(fromFile) ? fromFile : path.resolve(g.root, fromFile);
+  const { installDir } = await installFromTarball(abs, version);
+
+  // Post-install verification — the loader IS the acceptance test. Refusing
+  // here (files stay for inspection; status will show the same refusal) beats
+  // reporting success for a bundle that can never load.
+  const load = await loadPremiumBrain(opts);
+  if (load.status !== 'ok') {
+    throw new DevCortexError(
+      'INTERNAL',
+      `Bundle extracted but failed verification (${load.status}): ${load.reason}`,
+    );
+  }
+
+  return {
+    data: { ok: true, version: load.version, installDir, contract: 'ok' },
+    human: renderPremiumInstall({
+      version: load.version,
+      installDir,
+      ...(check.state === 'grace' && check.reason !== undefined
+        ? { graceReason: check.reason }
+        : {}),
+    }),
+  };
+}
+
+/**
  * `premium status` — informational, ALWAYS exits 0 (spec acceptance: a
  * pure-OSS install reports cleanly). Reports the stored license's verified
  * state and whether the Premium bundle is installed. Never throws: an absent
  * or unparseable store reads as `none`, a bad license reports `invalid`, and
- * the bundle check is manifest PRESENCE only (the loader's deeper contract
- * handshake arrives with `premium install`).
+ * an installed bundle additionally reports the loader handshake (`contract:
+ * ok` or the typed refusal) — `loadPremiumBrain` never throws, so the
+ * exit-0 contract holds.
  *
  * `opts.publicKeysPem` is the same test/staging-only seam as activate.
  */
@@ -1012,6 +1091,12 @@ export async function cmdPremiumStatus(
       // Presence alone marks the bundle installed; a corrupt manifest just
       // loses the version detail — status stays informational, never throws.
     }
+
+    // Loader handshake — never throws, so the exit-0 contract holds even on
+    // a broken install. Only meaningful once a manifest exists.
+    const load = await loadPremiumBrain(opts);
+    bundle.contract = load.status;
+    if (load.status !== 'ok') bundle.contractReason = load.reason;
   }
 
   return {

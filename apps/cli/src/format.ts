@@ -45,6 +45,8 @@ import type {
 import type { InstallResult } from '@devcortex/claude-code';
 
 import type { LicenseState } from './premium/license';
+import { SUPPORTED_PREMIUM_CONTRACT } from './premium/loader';
+import type { PremiumLoad } from './premium/loader';
 
 const RULE = pc.dim('─'.repeat(56));
 
@@ -1081,10 +1083,14 @@ export interface PremiumLicenseView {
   reason?: string;
 }
 
-/** Bundle slice of `premium status` — presence of the installed manifest. */
+/** Bundle slice of `premium status` — manifest presence + loader handshake. */
 export interface PremiumBundleView {
   installed: boolean;
   version?: string;
+  /** `loadPremiumBrain` handshake: `ok` or the typed refusal. Set only when installed. */
+  contract?: PremiumLoad['status'];
+  /** The loader's refusal reason — present only when `contract` is not `ok`. */
+  contractReason?: string;
 }
 
 export function renderPremiumStatus(
@@ -1114,5 +1120,38 @@ export function renderPremiumStatus(
     ? `${pc.green('✓')} installed${bundle.version !== undefined ? ` ${pc.dim(`v${bundle.version}`)}` : ''}`
     : pc.dim('not installed');
   lines.push(`${label('Bundle')}${bundleText}`);
+
+  if (bundle.contract !== undefined) {
+    const contractText =
+      bundle.contract === 'ok'
+        ? `${pc.green('✓')} handshake ok ${pc.dim(`(contract v${SUPPORTED_PREMIUM_CONTRACT})`)}`
+        : pc.red(bundle.contract);
+    lines.push(`${label('Contract')}${contractText}`);
+    if (bundle.contractReason !== undefined) {
+      lines.push(`  ${pc.yellow('⚠')} ${bundle.contractReason}`);
+    }
+  }
+  return lines.join('\n');
+}
+
+/** Result view for `premium install` — rendered only on success. */
+export interface PremiumInstallView {
+  version: string;
+  installDir: string;
+  /** Present when the license is in its grace window — installing still warns. */
+  graceReason?: string;
+}
+
+export function renderPremiumInstall(view: PremiumInstallView): string {
+  const lines = [
+    heading('CORTEX PREMIUM INSTALL'),
+    `${label('Bundle')}${pc.green('✓')} installed ${pc.bold(`v${view.version}`)}`,
+    `${label('Path')}${pc.dim(view.installDir)}`,
+    `${label('Contract')}${pc.green('✓')} handshake ok ${pc.dim(`(contract v${SUPPORTED_PREMIUM_CONTRACT})`)}`,
+  ];
+  if (view.graceReason !== undefined) {
+    lines.push(`${pc.yellow('⚠')} ${view.graceReason}`);
+  }
+  lines.push('', pc.dim('Check anytime with: devcortex premium status'));
   return lines.join('\n');
 }
