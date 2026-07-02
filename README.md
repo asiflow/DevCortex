@@ -82,6 +82,10 @@ flowchart LR
 - **Verify** — the evidence ledger refuses to let the agent claim "done" until the
   repo's *own* gates (typecheck / lint / build / test) actually pass.
 - **Ship** — a single evidence-backed verdict you (and CI) can trust.
+- **Brief & distill** — `devcortex brief` injects a ≤2KB evidence-backed project
+  brief at Claude Code session start; `devcortex distill` turns the transcript into
+  run records and observed project memory at session end — both wired automatically
+  by `devcortex install claude`.
 
 Deep cognition happens **locally and outside your agent's context**, so only a small,
 actionable instruction comes back — it doesn't burn your tokens.
@@ -131,8 +135,6 @@ Or point **any MCP client** at the stdio server (`cortex.*` tools) — zero inst
 
 📖 **Full setup for every host — [docs/integrations.md](./docs/integrations.md)** —
 what each command writes, what the hooks do, and how to get the MCP server.
-
-- **Session brief + transcript memory** — `devcortex brief` injects a ≤2KB evidence-backed project state at Claude Code session start; `devcortex distill` auto-captures run records and observed project memory at session end — both wired automatically by `devcortex install claude`.
 
 ## Try it in 30 seconds
 
