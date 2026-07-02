@@ -112,71 +112,89 @@ function isLicenseFile(value: unknown): value is LicenseFile {
 
 /**
  * Verify a parsed license file against the embedded (or supplied) public
- * keys and classify it on the valid → grace → expired timeline. Any shape or
- * signature problem yields `{ state: 'invalid' }` — this function never
- * throws, and it never calls crypto with an unvalidated shape.
+ * keys and classify it on the valid → grace → expired timeline.
+ *
+ * NEVER throws, for ANY input: the entire body is fenced by one try/catch,
+ * so hostile in-memory objects (throwing getters, getters that change value
+ * between reads, circular structures) all degrade to `{ state: 'invalid' }`.
+ *
+ * TOCTOU guard: once a signature matches, the payload is re-materialized
+ * with `JSON.parse` from the EXACT canonical bytes that were verified. The
+ * time math and the echoed `payload` read only that materialized object —
+ * never the caller's — so downstream consumers can only observe values that
+ * were actually signed.
  */
 export function verifyLicenseFile(
   file: unknown,
   options?: { publicKeysPem?: readonly string[]; now?: Date },
 ): LicenseCheck {
-  if (!isLicenseFile(file)) {
-    return {
-      state: 'invalid',
-      reason: 'License file is malformed — expected { payload, sig } issued by DevCortex.',
-    };
-  }
-  const { payload, sig } = file;
-
-  // Rotation = append, never replace: any known key may have signed this
-  // license, so every key gets a chance. An empty key list fails closed.
-  const keys = options?.publicKeysPem ?? PREMIUM_PUBKEYS;
-  let message: Buffer;
   try {
-    message = Buffer.from(canonicalJson(payload));
-  } catch {
-    // e.g. a circular in-memory object that satisfies the shape guard's
-    // required fields — cannot happen via JSON.parse, but the primitive's
-    // never-throw contract holds for ANY input.
-    return { state: 'invalid', reason: 'License payload could not be canonicalized.' };
-  }
-  const signature = Buffer.from(sig, 'base64');
-  const signedByKnownKey = keys.some((pem) => {
-    try {
-      return verify(null, message, createPublicKey(pem), signature);
-    } catch {
-      // Malformed PEM or signature bytes — an unverifiable key is a
-      // non-match, never an exception surfaced to the caller.
-      return false;
+    if (!isLicenseFile(file)) {
+      return {
+        state: 'invalid',
+        reason: 'License file is malformed — expected { payload, sig } issued by DevCortex.',
+      };
     }
-  });
-  if (!signedByKnownKey) {
-    return {
-      state: 'invalid',
-      reason: 'License signature does not match any known DevCortex signing key.',
-    };
-  }
 
-  const nowMs = (options?.now ?? new Date()).getTime();
-  const expMs = Date.parse(payload.exp);
-  const hardStopMs = expMs + payload.graceDays * DAY_MS;
-  const daysLeft = Math.floor((hardStopMs - nowMs) / DAY_MS);
-  const expDate = new Date(expMs).toISOString().slice(0, 10);
+    // Rotation = append, never replace: any known key may have signed this
+    // license, so every key gets a chance. An empty key list fails closed.
+    const keys = options?.publicKeysPem ?? PREMIUM_PUBKEYS;
+    const canonical = canonicalJson(file.payload);
+    const message = Buffer.from(canonical);
+    const signature = Buffer.from(file.sig, 'base64');
+    const signedByKnownKey = keys.some((pem) => {
+      try {
+        return verify(null, message, createPublicKey(pem), signature);
+      } catch {
+        // Malformed PEM or signature bytes — an unverifiable key is a
+        // non-match; it must not stop later rotation keys from being tried.
+        return false;
+      }
+    });
+    if (!signedByKnownKey) {
+      return {
+        state: 'invalid',
+        reason: 'License signature does not match any known DevCortex signing key.',
+      };
+    }
 
-  if (nowMs <= expMs) {
-    return { state: 'valid', daysLeft, payload };
-  }
-  if (nowMs <= hardStopMs) {
+    // The signature matched `canonical` — re-materialize the payload from
+    // those exact signed bytes and use ONLY it from here on. Hostile getters
+    // can lie to the shape guard above, but they cannot alter what was
+    // signed; re-guarding the (getter-free) materialized object closes the
+    // verify-then-use gap.
+    const payload: unknown = JSON.parse(canonical);
+    if (!isLicensePayload(payload)) {
+      return {
+        state: 'invalid',
+        reason: 'License signed bytes do not contain a well-formed payload.',
+      };
+    }
+
+    const nowMs = (options?.now ?? new Date()).getTime();
+    const expMs = Date.parse(payload.exp); // single read, from signed bytes
+    const hardStopMs = expMs + payload.graceDays * DAY_MS;
+    const daysLeft = Math.floor((hardStopMs - nowMs) / DAY_MS);
+    const expDate = new Date(expMs).toISOString().slice(0, 10);
+
+    if (nowMs <= expMs) {
+      return { state: 'valid', daysLeft, payload };
+    }
+    if (nowMs <= hardStopMs) {
+      return {
+        state: 'grace',
+        daysLeft,
+        reason: `License expired ${expDate} — premium keeps working ${daysLeft} more day(s); run \`devcortex premium refresh\`.`,
+        payload,
+      };
+    }
     return {
-      state: 'grace',
-      daysLeft,
-      reason: `License expired ${expDate} — premium keeps working ${daysLeft} more day(s); run \`devcortex premium refresh\`.`,
+      state: 'expired',
+      reason: `License expired ${expDate} and the ${payload.graceDays}-day grace window has ended. Run \`devcortex premium refresh\`, or renew at https://cloud.devcortex.dev.`,
       payload,
     };
+  } catch {
+    // Whole-body fence: a verification primitive returns states, not throws.
+    return { state: 'invalid', reason: 'License file could not be read or verified.' };
   }
-  return {
-    state: 'expired',
-    reason: `License expired ${expDate} and the ${payload.graceDays}-day grace window has ended. Run \`devcortex premium refresh\`, or renew at https://cloud.devcortex.dev.`,
-    payload,
-  };
 }

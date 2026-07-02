@@ -67,4 +67,26 @@ describe('verifyLicenseFile', () => {
     expect(verifyLicenseFile('not a license').state).toBe('invalid');
     expect(verifyLicenseFile({ payload: {}, sig: 'x' }).state).toBe('invalid');
   });
+
+  it('never throws on hostile getter objects — returns invalid', () => {
+    const hostile = {
+      payload: {},
+      get sig(): string {
+        throw new Error('hostile getter');
+      },
+    };
+    expect(verifyLicenseFile(hostile, { publicKeysPem: [pubPem] }).state).toBe('invalid');
+  });
+
+  it('accepts a license signed by key #2 of the rotation list', () => {
+    const other = generateKeyPairSync('ed25519');
+    const otherPub = other.publicKey.export({ type: 'spki', format: 'pem' }).toString();
+    // makeLicense signs with privKey (pubPem's pair) — appended LAST, as rotation appends.
+    const check = verifyLicenseFile(makeLicense(), { publicKeysPem: [otherPub, pubPem] });
+    expect(check.state).toBe('valid');
+  });
+
+  it('fails closed: a well-signed license with an empty key list is invalid', () => {
+    expect(verifyLicenseFile(makeLicense(), { publicKeysPem: [] }).state).toBe('invalid');
+  });
 });
