@@ -19,6 +19,7 @@ import {
   compileContext,
   compileIntent,
   composeSessionBrief,
+  ConfigError,
   CONTEXT_DEPTHS,
   defaultConfig,
   depthForRisk,
@@ -110,6 +111,8 @@ import {
   renderMemoryList,
   renderPlan,
   renderPreflight,
+  renderPremiumActivate,
+  renderPremiumStatus,
   renderPrivacyRedact,
   renderPrivacyStatus,
   renderScan,
@@ -127,9 +130,14 @@ import type {
   InstallAllItemView,
   LearnFailureView,
   PlanStageView,
+  PremiumBundleView,
+  PremiumLicenseView,
   SkillListItemView,
   SkillRecommendationView,
 } from './format';
+import { verifyLicenseFile } from './premium/license';
+import type { LicenseFile } from './premium/license';
+import { installedManifestPath, readLicenseFile, writeLicenseFile } from './premium/store';
 import {
   EXIT_NOT_READY,
   emit,
@@ -883,6 +891,132 @@ export async function cmdInstallAll(g: GlobalOptions, opts: InstallOpts): Promis
   return {
     data: { ok: true, count: results.length, applied, planned, results },
     human: renderInstallAll(results),
+  };
+}
+
+// --- premium ------------------------------------------------------------------
+
+/**
+ * `premium activate <file>` — verify a license JSON offline and store it under
+ * the DevCortex home. FAIL-LOUD contract: an unreadable file, unparseable
+ * JSON, a bad signature, or a hard-expired license all THROW and nothing is
+ * stored — only `valid` and `grace` licenses persist (grace surfaces its
+ * warning). The stored file pairs the VERIFIED payload (re-materialized from
+ * the exact signed bytes by `verifyLicenseFile`) with the original signature,
+ * so the store never carries unsigned extra fields from the input file and
+ * always re-verifies deterministically.
+ *
+ * `opts.publicKeysPem` is a TEST/STAGING-ONLY injection seam mirroring
+ * `verifyLicenseFile` — the embedded PREMIUM_PUBKEYS list ships empty until
+ * the production key lands. The CLI deliberately exposes no flag for it.
+ */
+export async function cmdPremiumActivate(
+  g: GlobalOptions,
+  file: string,
+  opts?: { publicKeysPem?: readonly string[] },
+): Promise<CommandResult> {
+  const target = file.trim();
+  if (target.length === 0) {
+    throw new DevCortexError('INTERNAL', 'premium activate requires a license file path.');
+  }
+  const abs = path.isAbsolute(target) ? target : path.resolve(g.root, target);
+
+  let raw: string;
+  try {
+    raw = await readFile(abs, 'utf8');
+  } catch (err) {
+    throw new DevCortexError('INTERNAL', `Cannot read license file "${target}".`, { cause: err });
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    throw new ConfigError(`License file "${target}" is not valid JSON.`, { cause: err });
+  }
+
+  const check = verifyLicenseFile(parsed, opts);
+  const state = check.state;
+  if (state !== 'valid' && state !== 'grace') {
+    const reason = check.reason ?? 'License verification failed.';
+    throw new DevCortexError('INTERNAL', `License not activated: ${reason}`);
+  }
+  const payload = check.payload;
+  if (payload === undefined) {
+    // Unreachable: valid/grace outcomes always echo the verified payload.
+    throw new DevCortexError('INTERNAL', 'License not activated: verified payload missing.');
+  }
+
+  // Safe cast: a valid/grace outcome means the shape guard inside
+  // `verifyLicenseFile` accepted `parsed` as a LicenseFile (string `sig`).
+  const stored: LicenseFile = { payload, sig: (parsed as LicenseFile).sig };
+  await writeLicenseFile(stored);
+
+  const daysLeft = check.daysLeft ?? 0;
+  return {
+    data: { ok: true, state, daysLeft },
+    human: renderPremiumActivate({
+      state,
+      sub: payload.sub,
+      plan: payload.plan,
+      daysLeft,
+      ...(check.reason !== undefined ? { reason: check.reason } : {}),
+    }),
+  };
+}
+
+/**
+ * `premium status` — informational, ALWAYS exits 0 (spec acceptance: a
+ * pure-OSS install reports cleanly). Reports the stored license's verified
+ * state and whether the Premium bundle is installed. Never throws: an absent
+ * or unparseable store reads as `none`, a bad license reports `invalid`, and
+ * the bundle check is manifest PRESENCE only (the loader's deeper contract
+ * handshake arrives with `premium install`).
+ *
+ * `opts.publicKeysPem` is the same test/staging-only seam as activate.
+ */
+export async function cmdPremiumStatus(
+  g: GlobalOptions,
+  opts?: { publicKeysPem?: readonly string[] },
+): Promise<CommandResult> {
+  void g; // status is global (home-scoped), not workspace-scoped
+
+  const storedLicense = await readLicenseFile();
+  let license: PremiumLicenseView;
+  if (storedLicense === null) {
+    license = { state: 'none' };
+  } else {
+    const check = verifyLicenseFile(storedLicense, opts);
+    license = { state: check.state };
+    if (check.payload !== undefined) {
+      license.plan = check.payload.plan;
+      license.sub = check.payload.sub;
+    }
+    if (check.daysLeft !== undefined) license.daysLeft = check.daysLeft;
+    if (check.reason !== undefined) license.reason = check.reason;
+  }
+
+  const bundle: PremiumBundleView = { installed: false };
+  const manifestPath = installedManifestPath();
+  if (existsSync(manifestPath)) {
+    bundle.installed = true;
+    try {
+      const manifest: unknown = JSON.parse(await readFile(manifestPath, 'utf8'));
+      if (typeof manifest === 'object' && manifest !== null && !Array.isArray(manifest)) {
+        const version = (manifest as Record<string, unknown>).version;
+        if (typeof version === 'string' && version.trim().length > 0) {
+          bundle.version = version;
+        }
+      }
+    } catch {
+      // Presence alone marks the bundle installed; a corrupt manifest just
+      // loses the version detail — status stays informational, never throws.
+    }
+  }
+
+  return {
+    data: { ok: true, license, bundle },
+    human: renderPremiumStatus(license, bundle),
   };
 }
 

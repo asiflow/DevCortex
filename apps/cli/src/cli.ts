@@ -464,6 +464,22 @@ function buildProgram(): Command {
       return runAction(this, (g) => commands.cmdInstall(g, target, { force }));
     });
 
+  // --- premium ---
+  const premium = withGlobals(program.command('premium')).description(
+    'Premium Brain — activate a license, install the private bundle, check status',
+  );
+  withGlobals(premium.command('activate'))
+    .description('Verify and store a DevCortex Premium license file')
+    .argument('<file>', 'path to the license JSON you received')
+    .action(function (this: Command, file: string) {
+      return runAction(this, (g) => commands.cmdPremiumActivate(g, file));
+    });
+  withGlobals(premium.command('status'))
+    .description('Show license state and installed Premium bundle (informational, always exits 0)')
+    .action(function (this: Command) {
+      return runAction(this, (g) => commands.cmdPremiumStatus(g));
+    });
+
   return program;
 }
 

@@ -44,6 +44,8 @@ import type {
 } from '@devcortex/core';
 import type { InstallResult } from '@devcortex/claude-code';
 
+import type { LicenseState } from './premium/license';
+
 const RULE = pc.dim('─'.repeat(56));
 
 function heading(title: string): string {
@@ -1024,5 +1026,93 @@ export function renderPrivacyRedact(view: PrivacyRedactView): string {
       lines.push(`  ${pc.yellow('•')} ${pc.bold(f.kind.padEnd(12))} ${pc.dim('×')}${f.count}`);
     }
   }
+  return lines.join('\n');
+}
+
+// --- premium ------------------------------------------------------------------
+
+/** Colour a license state for scanability; 'none' is the un-activated OSS state. */
+function premiumStateTag(state: LicenseState | 'none'): string {
+  switch (state) {
+    case 'valid':
+      return pc.green('VALID');
+    case 'grace':
+      return pc.yellow('GRACE');
+    case 'expired':
+      return pc.red('EXPIRED');
+    case 'invalid':
+      return pc.bold(pc.red('INVALID'));
+    case 'none':
+      return pc.dim('NONE');
+    default: {
+      const _exhaustive: never = state;
+      return _exhaustive;
+    }
+  }
+}
+
+export interface PremiumActivateView {
+  state: 'valid' | 'grace';
+  sub: string;
+  plan: string;
+  daysLeft: number;
+  reason?: string;
+}
+
+export function renderPremiumActivate(view: PremiumActivateView): string {
+  const lines = [
+    heading('CORTEX PREMIUM ACTIVATE'),
+    `${label('License')}${pc.green('✓')} activated — ${pc.bold(view.sub)} ${pc.dim(`(${view.plan})`)}`,
+    `${label('State')}${premiumStateTag(view.state)} ${pc.dim(`· ${view.daysLeft} day(s) until hard stop`)}`,
+  ];
+  if (view.state === 'grace' && view.reason !== undefined) {
+    lines.push(`${pc.yellow('⚠')} ${view.reason}`);
+  }
+  lines.push('', pc.dim('Check anytime with: devcortex premium status'));
+  return lines.join('\n');
+}
+
+/** License slice of `premium status` — only present fields are emitted. */
+export interface PremiumLicenseView {
+  state: LicenseState | 'none';
+  plan?: string;
+  sub?: string;
+  daysLeft?: number;
+  reason?: string;
+}
+
+/** Bundle slice of `premium status` — presence of the installed manifest. */
+export interface PremiumBundleView {
+  installed: boolean;
+  version?: string;
+}
+
+export function renderPremiumStatus(
+  license: PremiumLicenseView,
+  bundle: PremiumBundleView,
+): string {
+  const lines = [heading('CORTEX PREMIUM')];
+
+  if (license.state === 'none') {
+    lines.push(
+      `${label('License')}${premiumStateTag('none')} ${pc.dim('— not activated · run `devcortex premium activate <file>`')}`,
+    );
+  } else {
+    const who =
+      license.sub !== undefined && license.plan !== undefined
+        ? ` — ${pc.bold(license.sub)} ${pc.dim(`(${license.plan})`)}`
+        : '';
+    const days =
+      license.daysLeft !== undefined ? ` ${pc.dim(`· ${license.daysLeft} day(s) left`)}` : '';
+    lines.push(`${label('License')}${premiumStateTag(license.state)}${who}${days}`);
+    if (license.reason !== undefined) {
+      lines.push(`  ${pc.yellow('⚠')} ${license.reason}`);
+    }
+  }
+
+  const bundleText = bundle.installed
+    ? `${pc.green('✓')} installed${bundle.version !== undefined ? ` ${pc.dim(`v${bundle.version}`)}` : ''}`
+    : pc.dim('not installed');
+  lines.push(`${label('Bundle')}${bundleText}`);
   return lines.join('\n');
 }
