@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { ConfigError, DevCortexError } from '@devcortex/core';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import * as commands from '../src/commands';
+import type { Fetcher } from '../src/premium/client';
 import { canonicalJson } from '../src/premium/license';
 import type { LicenseFile, LicensePayload } from '../src/premium/license';
 import { SUPPORTED_PREMIUM_CONTRACT } from '../src/premium/loader';
@@ -92,11 +93,13 @@ describe('cmdDistill', () => {
 
 let pubPem: string;
 let privKey: import('node:crypto').KeyObject;
+let otherPrivKey: import('node:crypto').KeyObject;
 
 beforeAll(() => {
   const pair = generateKeyPairSync('ed25519');
   pubPem = pair.publicKey.export({ type: 'spki', format: 'pem' }).toString();
   privKey = pair.privateKey;
+  otherPrivKey = generateKeyPairSync('ed25519').privateKey; // NOT in pubPem
 });
 
 function makeLicense(overrides: Partial<LicensePayload> = {}): LicenseFile {
@@ -272,16 +275,55 @@ describe('premium commands', () => {
     expect(manifest).toEqual({ version: '9.9.9', contract: SUPPORTED_PREMIUM_CONTRACT });
   });
 
-  it('cmdPremiumInstall without --from-file throws the exact remote-install message', async () => {
+  // --- premium install / refresh (remote path, injected fetcher — no network) --
+
+  function recordingFetcher(makeResponse: () => Response): {
+    calls: { url: string; init: RequestInit | undefined }[];
+    fetcher: Fetcher;
+  } {
+    const calls: { url: string; init: RequestInit | undefined }[] = [];
+    const fetcher: Fetcher = async (input, init) => {
+      calls.push({ url: String(input), init });
+      return makeResponse();
+    };
+    return { calls, fetcher };
+  }
+
+  function jsonResponse(status: number, body: unknown): Response {
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
+
+  it('cmdPremiumInstall without --from-file downloads from the cloud and installs end-to-end', async () => {
     await activate();
-    const err = await commands
-      .cmdPremiumInstall(g(), { version: '9.9.9' }, { publicKeysPem: [pubPem] })
-      .then(() => null)
-      .catch((e: unknown) => e);
-    expect(err).toBeInstanceOf(DevCortexError);
-    expect((err as DevCortexError).message).toBe(
-      'remote install requires DevCortex Cloud — pass --from-file for a local bundle',
+    const bytes = await readFile(await fabricateTgz(SUPPORTED_PREMIUM_CONTRACT));
+    const { calls, fetcher } = recordingFetcher(
+      () =>
+        new Response(new Uint8Array(bytes), {
+          status: 200,
+          headers: { 'content-type': 'application/gzip', 'x-premium-version': '9.9.9' },
+        }),
     );
+
+    const result = await commands.cmdPremiumInstall(g(), {}, { publicKeysPem: [pubPem], fetcher });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe('https://cloud.devcortex.dev/api/v1/premium/download');
+    expect(new Headers(calls[0]?.init?.headers).get('authorization')).toMatch(/^Bearer /);
+    expect(result.data).toMatchObject({ ok: true, version: '9.9.9', contract: 'ok' });
+    expect(existsSync(path.join(premiumDir(), '9.9.9', 'package', 'dist', 'index.js'))).toBe(true);
+    const manifest: unknown = JSON.parse(await readFile(installedManifestPath(), 'utf8'));
+    expect(manifest).toEqual({ version: '9.9.9', contract: SUPPORTED_PREMIUM_CONTRACT });
+  });
+
+  it('cmdPremiumInstall (remote) refuses without a license — and never touches the network', async () => {
+    const { calls, fetcher } = recordingFetcher(() => jsonResponse(200, {}));
+    await expect(
+      commands.cmdPremiumInstall(g(), {}, { publicKeysPem: [pubPem], fetcher }),
+    ).rejects.toThrow(/devcortex premium activate/);
+    expect(calls).toHaveLength(0);
   });
 
   it('cmdPremiumInstall requires --version alongside --from-file', async () => {
@@ -346,6 +388,103 @@ describe('premium commands', () => {
       bundle: { installed: true, contract: 'license-invalid' },
     });
     expect(result.exitCode ?? 0).toBe(0);
+  });
+
+  // --- premium refresh -------------------------------------------------------
+
+  function signLicense(
+    payload: LicensePayload,
+    key: import('node:crypto').KeyObject,
+  ): LicenseFile {
+    const sig = sign(null, Buffer.from(canonicalJson(payload)), key).toString('base64');
+    return { payload, sig };
+  }
+
+  it('cmdPremiumRefresh renews via the cloud, re-verifies locally, and persists', async () => {
+    await activate();
+    const renewed = makeLicense({ exp: new Date(Date.now() + 60 * 86400_000).toISOString() });
+    const { calls, fetcher } = recordingFetcher(() =>
+      jsonResponse(200, { ok: true, license: renewed }),
+    );
+
+    const result = await commands.cmdPremiumRefresh(g(), { publicKeysPem: [pubPem], fetcher });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe('https://cloud.devcortex.dev/api/v1/licenses/refresh');
+    expect(calls[0]?.init?.method).toBe('POST');
+    expect(result.data).toMatchObject({ ok: true, state: 'valid' });
+    await expect(readLicenseFile()).resolves.toEqual(renewed);
+  });
+
+  it('cmdPremiumRefresh refuses without a license — and never touches the network', async () => {
+    const { calls, fetcher } = recordingFetcher(() => jsonResponse(200, {}));
+    await expect(
+      commands.cmdPremiumRefresh(g(), { publicKeysPem: [pubPem], fetcher }),
+    ).rejects.toThrow(/devcortex premium activate/);
+    expect(calls).toHaveLength(0);
+  });
+
+  it('cmdPremiumRefresh rejects a returned license the trusted keys did not sign — store untouched', async () => {
+    await activate();
+    const before = await readLicenseFile();
+    const forged = signLicense(
+      { ...makeLicense().payload, exp: new Date(Date.now() + 60 * 86400_000).toISOString() },
+      otherPrivKey,
+    );
+    const { fetcher } = recordingFetcher(() => jsonResponse(200, { ok: true, license: forged }));
+
+    await expect(
+      commands.cmdPremiumRefresh(g(), { publicKeysPem: [pubPem], fetcher }),
+    ).rejects.toThrow(/verification/i);
+    await expect(readLicenseFile()).resolves.toEqual(before); // forged file never stored
+  });
+
+  // --- premium status opportunistic auto-refresh ------------------------------
+
+  it('cmdPremiumStatus auto-refreshes a grace license and reports refreshed: true', async () => {
+    const grace = makeLicense({ exp: new Date(Date.now() - 5 * 86400_000).toISOString() });
+    await commands.cmdPremiumActivate(g(), await writeLicenseJson(grace), {
+      publicKeysPem: [pubPem],
+    });
+    const renewed = makeLicense({ exp: new Date(Date.now() + 30 * 86400_000).toISOString() });
+    const { calls, fetcher } = recordingFetcher(() =>
+      jsonResponse(200, { ok: true, license: renewed }),
+    );
+
+    const result = await commands.cmdPremiumStatus(g(), { publicKeysPem: [pubPem], fetcher });
+
+    expect(calls).toHaveLength(1);
+    expect(result.data).toMatchObject({
+      ok: true,
+      license: { state: 'valid', refreshed: true },
+    });
+    await expect(readLicenseFile()).resolves.toEqual(renewed);
+    expect(result.exitCode ?? 0).toBe(0);
+  });
+
+  it('cmdPremiumStatus stays informational when the auto-refresh cannot reach the cloud', async () => {
+    const grace = makeLicense({ exp: new Date(Date.now() - 5 * 86400_000).toISOString() });
+    await commands.cmdPremiumActivate(g(), await writeLicenseJson(grace), {
+      publicKeysPem: [pubPem],
+    });
+    const fetcher: Fetcher = async () => {
+      throw new Error('ECONNREFUSED');
+    };
+
+    const result = await commands.cmdPremiumStatus(g(), { publicKeysPem: [pubPem], fetcher });
+
+    expect(result.data).toMatchObject({ ok: true, license: { state: 'grace' } });
+    expect((result.data as { license: { refreshed?: boolean } }).license.refreshed).toBeUndefined();
+    await expect(readLicenseFile()).resolves.toEqual(grace); // store untouched
+    expect(result.exitCode ?? 0).toBe(0);
+  });
+
+  it('cmdPremiumStatus does not fire the auto-refresh for a far-from-expiry license', async () => {
+    await activate(); // exp = +30 days
+    const { calls, fetcher } = recordingFetcher(() => jsonResponse(200, {}));
+    const result = await commands.cmdPremiumStatus(g(), { publicKeysPem: [pubPem], fetcher });
+    expect(calls).toHaveLength(0);
+    expect(result.data).toMatchObject({ ok: true, license: { state: 'valid' } });
   });
 });
 

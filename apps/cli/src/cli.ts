@@ -476,10 +476,10 @@ function buildProgram(): Command {
     });
   withGlobals(premium.command('install'))
     .description(
-      'Install the Premium bundle — local tarball via --from-file (remote needs DevCortex Cloud)',
+      'Install the Premium bundle — from DevCortex Cloud by default, or a local tarball via --from-file',
     )
     .option('--from-file <tgz>', 'install from a local bundle tarball (npm-pack layout)')
-    .option('--version <version>', 'bundle version being installed, e.g. 1.2.3')
+    .option('--version <version>', 'bundle version to install, e.g. 1.2.3 (remote default: newest)')
     .action(function (this: Command) {
       const opts = this.opts();
       const fromFile = typeof opts.fromFile === 'string' ? opts.fromFile : undefined;
@@ -490,6 +490,11 @@ function buildProgram(): Command {
           ...(version !== undefined ? { version } : {}),
         }),
       );
+    });
+  withGlobals(premium.command('refresh'))
+    .description('Renew the stored license against DevCortex Cloud (extends exp by durationDays)')
+    .action(function (this: Command) {
+      return runAction(this, (g) => commands.cmdPremiumRefresh(g));
     });
   withGlobals(premium.command('status'))
     .description('Show license state and installed Premium bundle (informational, always exits 0)')

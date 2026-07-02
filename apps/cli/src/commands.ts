@@ -5,7 +5,7 @@
 // ============================================================================
 
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, readdir, stat } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 
@@ -113,6 +113,7 @@ import {
   renderPreflight,
   renderPremiumActivate,
   renderPremiumInstall,
+  renderPremiumRefresh,
   renderPremiumStatus,
   renderPrivacyRedact,
   renderPrivacyStatus,
@@ -136,6 +137,8 @@ import type {
   SkillListItemView,
   SkillRecommendationView,
 } from './format';
+import { downloadPremium, maybeRefresh, refreshRemote } from './premium/client';
+import type { Fetcher } from './premium/client';
 import { verifyLicenseFile } from './premium/license';
 import type { LicenseFile } from './premium/license';
 import { installFromTarball, loadPremiumBrain } from './premium/loader';
@@ -968,39 +971,37 @@ export async function cmdPremiumActivate(
 }
 
 /**
- * `premium install` — P0 is the LOCAL path: `--from-file <tgz>` plus
- * `--version <v>` extract a bundle tarball under the DevCortex home (the
- * remote download path arrives with DevCortex Cloud). Gate order is
+ * `premium install` — the REMOTE path is the default: download the bundle
+ * from DevCortex Cloud (authenticated by the stored license's wire bearer),
+ * optionally pinned with `--version`. `--from-file <tgz>` plus `--version <v>`
+ * keep the LOCAL tarball path exactly as Task 4 built it. Gate order is
  * deliberate: an activated, non-expired license is required BEFORE anything
- * touches disk (grace proceeds with its warning), then `installFromTarball`
- * extracts + records the manifest, then `loadPremiumBrain` runs as the
- * post-install acceptance test — a bundle that fails the handshake fails the
- * install, loudly, with the loader's own refusal reason.
+ * touches network or disk (grace proceeds with its warning), then
+ * `installFromTarball` extracts + records the manifest, then
+ * `loadPremiumBrain` runs as the post-install acceptance test — a bundle that
+ * fails the handshake fails the install, loudly, with the loader's own
+ * refusal reason.
  *
- * `opts.publicKeysPem` is the same test/staging-only seam as activate.
+ * `opts.publicKeysPem` is the same test/staging-only seam as activate;
+ * `opts.fetcher` is the client's network seam (tests never touch the wire).
  */
 export async function cmdPremiumInstall(
   g: GlobalOptions,
   local: { fromFile?: string; version?: string },
-  opts?: { publicKeysPem?: readonly string[] },
+  opts?: { publicKeysPem?: readonly string[]; fetcher?: Fetcher },
 ): Promise<CommandResult> {
   const fromFile = local.fromFile?.trim() ?? '';
-  if (fromFile.length === 0) {
-    throw new DevCortexError(
-      'INTERNAL',
-      'remote install requires DevCortex Cloud — pass --from-file for a local bundle',
-    );
-  }
   const version = local.version?.trim() ?? '';
-  if (version.length === 0) {
+  if (fromFile.length > 0 && version.length === 0) {
     throw new DevCortexError(
       'INTERNAL',
       'premium install --from-file also requires --version <version> (the bundle version being installed).',
     );
   }
 
-  // License gate — refuse BEFORE extracting anything. Absent and invalid both
-  // point at activation; hard-expired carries the verifier's actionable reason.
+  // License gate — refuse BEFORE downloading or extracting anything. Absent
+  // and invalid both point at activation; hard-expired carries the verifier's
+  // actionable reason.
   const stored = await readLicenseFile();
   const check = stored === null ? null : verifyLicenseFile(stored, opts);
   if (check === null || check.state === 'invalid') {
@@ -1016,9 +1017,34 @@ export async function cmdPremiumInstall(
       `Premium install refused: ${check.reason ?? 'the license has expired past its grace window.'}`,
     );
   }
+  const payload = check.payload;
+  if (payload === undefined) {
+    // Unreachable: valid/grace outcomes always echo the verified payload.
+    throw new DevCortexError('INTERNAL', 'Premium install failed: verified payload missing.');
+  }
 
-  const abs = path.isAbsolute(fromFile) ? fromFile : path.resolve(g.root, fromFile);
-  const { installDir } = await installFromTarball(abs, version);
+  let installDir: string;
+  if (fromFile.length > 0) {
+    // LOCAL path (Task 4) — unchanged.
+    const abs = path.isAbsolute(fromFile) ? fromFile : path.resolve(g.root, fromFile);
+    ({ installDir } = await installFromTarball(abs, version));
+  } else {
+    // REMOTE path — the wire bearer carries the VERIFIED echo (payload from
+    // signed bytes + original sig), so unsigned extra fields from a
+    // hand-edited store never reach the cloud. Safe cast: state !== 'invalid'
+    // means the shape guard accepted `stored` as a LicenseFile (string sig).
+    const wire: LicenseFile = { payload, sig: (stored as LicenseFile).sig };
+    const dl = await downloadPremium(wire, {
+      ...(version.length > 0 ? { version } : {}),
+      ...(opts?.fetcher !== undefined ? { fetcher: opts.fetcher } : {}),
+    });
+    try {
+      ({ installDir } = await installFromTarball(dl.tgzPath, dl.version));
+    } finally {
+      // The download spooled into its own mkdtemp dir — never leak it.
+      await rm(path.dirname(dl.tgzPath), { recursive: true, force: true });
+    }
+  }
 
   // Post-install verification — the loader IS the acceptance test. Refusing
   // here (files stay for inspection; status will show the same refusal) beats
@@ -1044,6 +1070,74 @@ export async function cmdPremiumInstall(
 }
 
 /**
+ * `premium refresh` — renew the stored license against DevCortex Cloud. The
+ * cloud re-signs with exp = now + durationDays; refresh works for
+ * grace-window AND hard-expired licenses (refresh IS the recovery path — the
+ * server's kill switch is revocation, which surfaces here as the 401/403
+ * activate-naming error). The RETURNED file is verified locally against the
+ * trusted keys before it replaces the store — never trust the wire blindly.
+ *
+ * `opts.publicKeysPem` is the same test/staging-only seam as activate;
+ * `opts.fetcher` is the client's network seam.
+ */
+export async function cmdPremiumRefresh(
+  g: GlobalOptions,
+  opts?: { publicKeysPem?: readonly string[]; fetcher?: Fetcher },
+): Promise<CommandResult> {
+  void g; // refresh is global (home-scoped), not workspace-scoped
+
+  const stored = await readLicenseFile();
+  const check = stored === null ? null : verifyLicenseFile(stored, opts);
+  if (check === null || check.state === 'invalid') {
+    const why = check?.reason ?? 'No license activated.';
+    throw new DevCortexError(
+      'INTERNAL',
+      `Premium refresh requires an activated license — run \`devcortex premium activate <license.json>\` first. (${why})`,
+    );
+  }
+  const payload = check.payload;
+  if (payload === undefined) {
+    // Unreachable: non-invalid outcomes always echo the verified payload.
+    throw new DevCortexError('INTERNAL', 'Premium refresh failed: verified payload missing.');
+  }
+
+  // Wire bearer = verified echo (see cmdPremiumInstall). Safe cast: state !==
+  // 'invalid' means the shape guard accepted `stored` as a LicenseFile.
+  const wire: LicenseFile = { payload, sig: (stored as LicenseFile).sig };
+  const refreshed = await refreshRemote(
+    wire,
+    opts?.fetcher !== undefined ? { fetcher: opts.fetcher } : undefined,
+  );
+
+  // NEVER persist an unverified wire response: the returned file must be
+  // signed by a trusted key and land as valid/grace before it replaces the
+  // stored license. (grace can legitimately happen against a skewed clock.)
+  const after = verifyLicenseFile(refreshed, opts);
+  if ((after.state !== 'valid' && after.state !== 'grace') || after.payload === undefined) {
+    throw new DevCortexError(
+      'INTERNAL',
+      `Refreshed license failed local verification — nothing was stored. ` +
+        `(${after.reason ?? `state: ${after.state}`})`,
+    );
+  }
+  const next: LicenseFile = { payload: after.payload, sig: refreshed.sig };
+  await writeLicenseFile(next);
+
+  const daysLeft = after.daysLeft ?? 0;
+  return {
+    data: { ok: true, state: after.state, daysLeft, exp: after.payload.exp },
+    human: renderPremiumRefresh({
+      state: after.state,
+      sub: after.payload.sub,
+      plan: after.payload.plan,
+      daysLeft,
+      exp: after.payload.exp,
+      ...(after.reason !== undefined ? { reason: after.reason } : {}),
+    }),
+  };
+}
+
+/**
  * `premium status` — informational, ALWAYS exits 0 (spec acceptance: a
  * pure-OSS install reports cleanly). Reports the stored license's verified
  * state and whether the Premium bundle is installed. Never throws: an absent
@@ -1052,11 +1146,19 @@ export async function cmdPremiumInstall(
  * ok` or the typed refusal) — `loadPremiumBrain` never throws, so the
  * exit-0 contract holds.
  *
- * `opts.publicKeysPem` is the same test/staging-only seam as activate.
+ * Status also hosts the opportunistic auto-refresh (spec PB-0 pt 4): when the
+ * license is in grace or expires within 7 days, `maybeRefresh` silently
+ * renews it via DevCortex Cloud. It is AWAITED here — status is user-facing
+ * and the freshest state IS the report — and every failure stays silent
+ * (offline is normal), preserving the exit-0 contract. A landed refresh is
+ * reported as `refreshed: true`.
+ *
+ * `opts.publicKeysPem` is the same test/staging-only seam as activate;
+ * `opts.fetcher` is the client's network seam.
  */
 export async function cmdPremiumStatus(
   g: GlobalOptions,
-  opts?: { publicKeysPem?: readonly string[] },
+  opts?: { publicKeysPem?: readonly string[]; fetcher?: Fetcher },
 ): Promise<CommandResult> {
   void g; // status is global (home-scoped), not workspace-scoped
 
@@ -1065,8 +1167,25 @@ export async function cmdPremiumStatus(
   if (storedLicense === null) {
     license = { state: 'none' };
   } else {
-    const check = verifyLicenseFile(storedLicense, opts);
+    let check = verifyLicenseFile(storedLicense, opts);
+
+    // Opportunistic auto-refresh — only a verifiable license goes on the wire
+    // (wire bearer = verified echo; safe cast as in cmdPremiumInstall).
+    let refreshedNow = false;
+    if (check.state !== 'invalid' && check.payload !== undefined) {
+      const wire: LicenseFile = { payload: check.payload, sig: (storedLicense as LicenseFile).sig };
+      const renewed = await maybeRefresh(wire, check, {
+        ...(opts?.fetcher !== undefined ? { fetcher: opts.fetcher } : {}),
+        ...(opts?.publicKeysPem !== undefined ? { publicKeysPem: opts.publicKeysPem } : {}),
+      });
+      if (renewed !== null) {
+        check = verifyLicenseFile(renewed, opts);
+        refreshedNow = true;
+      }
+    }
+
     license = { state: check.state };
+    if (refreshedNow) license.refreshed = true;
     if (check.payload !== undefined) {
       license.plan = check.payload.plan;
       license.sub = check.payload.sub;

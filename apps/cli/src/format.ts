@@ -1081,6 +1081,8 @@ export interface PremiumLicenseView {
   sub?: string;
   daysLeft?: number;
   reason?: string;
+  /** Present (true) only when the opportunistic auto-refresh landed this run. */
+  refreshed?: boolean;
 }
 
 /** Bundle slice of `premium status` — manifest presence + loader handshake. */
@@ -1111,6 +1113,9 @@ export function renderPremiumStatus(
     const days =
       license.daysLeft !== undefined ? ` ${pc.dim(`· ${license.daysLeft} day(s) left`)}` : '';
     lines.push(`${label('License')}${premiumStateTag(license.state)}${who}${days}`);
+    if (license.refreshed === true) {
+      lines.push(`  ${pc.green('↻')} ${pc.dim('license auto-refreshed via DevCortex Cloud')}`);
+    }
     if (license.reason !== undefined) {
       lines.push(`  ${pc.yellow('⚠')} ${license.reason}`);
     }
@@ -1151,6 +1156,31 @@ export function renderPremiumInstall(view: PremiumInstallView): string {
   ];
   if (view.graceReason !== undefined) {
     lines.push(`${pc.yellow('⚠')} ${view.graceReason}`);
+  }
+  lines.push('', pc.dim('Check anytime with: devcortex premium status'));
+  return lines.join('\n');
+}
+
+/** Result view for `premium refresh` — rendered only on success. */
+export interface PremiumRefreshView {
+  state: 'valid' | 'grace';
+  sub: string;
+  plan: string;
+  daysLeft: number;
+  /** ISO-8601 expiry of the renewed license. */
+  exp: string;
+  /** Present when the renewed license is (still) inside its grace window. */
+  reason?: string;
+}
+
+export function renderPremiumRefresh(view: PremiumRefreshView): string {
+  const lines = [
+    heading('CORTEX PREMIUM REFRESH'),
+    `${label('License')}${pc.green('↻')} renewed — ${pc.bold(view.sub)} ${pc.dim(`(${view.plan})`)}`,
+    `${label('State')}${premiumStateTag(view.state)} ${pc.dim(`· expires ${view.exp.slice(0, 10)} · ${view.daysLeft} day(s) until hard stop`)}`,
+  ];
+  if (view.state === 'grace' && view.reason !== undefined) {
+    lines.push(`${pc.yellow('⚠')} ${view.reason}`);
   }
   lines.push('', pc.dim('Check anytime with: devcortex premium status'));
   return lines.join('\n');
