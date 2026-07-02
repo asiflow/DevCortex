@@ -66,6 +66,12 @@ function makeLicense(overrides: Partial<LicensePayload> = {}): LicenseFile {
 let home: string;
 let savedHome: string | undefined;
 
+// Every mkdtemp staging dir created outside `home` (tgz builds, bad-bundle
+// stages) is tracked here and removed in afterEach — otherwise each run leaks
+// ~7 temp dirs under tmpdir(), which accumulated to an ENOSPC. Same idiom as
+// the `tmpRoots` array in commands.test.ts.
+const stagingDirs: string[] = [];
+
 beforeEach(async () => {
   savedHome = process.env.DEVCORTEX_HOME;
   home = await mkdtemp(path.join(tmpdir(), 'devcortex-loader-'));
@@ -76,6 +82,7 @@ afterEach(async () => {
   if (savedHome === undefined) delete process.env.DEVCORTEX_HOME;
   else process.env.DEVCORTEX_HOME = savedHome;
   await rm(home, { recursive: true, force: true });
+  await Promise.all(stagingDirs.splice(0).map((d) => rm(d, { recursive: true, force: true })));
 });
 
 const OK_INDEX_JS = `export const PREMIUM_CONTRACT_VERSION = ${SUPPORTED_PREMIUM_CONTRACT};\nexport const brain = () => 'premium-ok';\n`;
@@ -100,6 +107,7 @@ async function fabricateInstall(version: string, indexJs: string): Promise<void>
 /** Fabricate an npm-pack-shaped tarball (package/dist/index.js) and return its path. */
 async function fabricateTgz(indexJs: string, version = '9.9.9'): Promise<string> {
   const stage = await mkdtemp(path.join(tmpdir(), 'devcortex-tgz-'));
+  stagingDirs.push(stage);
   const dist = path.join(stage, 'package', 'dist');
   await mkdir(dist, { recursive: true });
   await writeFile(
@@ -275,6 +283,7 @@ describe('installFromTarball', () => {
 
   it('rejects a tgz missing package/dist/index.js (not a premium bundle)', async () => {
     const stage = await mkdtemp(path.join(tmpdir(), 'devcortex-badtgz-'));
+    stagingDirs.push(stage);
     await mkdir(path.join(stage, 'package'), { recursive: true });
     await writeFile(path.join(stage, 'package', 'readme.txt'), 'nothing here', 'utf8');
     const tgz = path.join(stage, 'bad.tgz');
@@ -320,6 +329,7 @@ describe('installFromTarball', () => {
     //    the STALE index.js and rewrite the manifest — a false success while
     //    old code keeps running. It must instead throw the clean sanity error.
     const badStage = await mkdtemp(path.join(tmpdir(), 'devcortex-stale-'));
+    stagingDirs.push(badStage);
     await mkdir(path.join(badStage, 'package'), { recursive: true });
     await writeFile(path.join(badStage, 'package', 'readme.txt'), 'no dist here', 'utf8');
     const badTgz = path.join(badStage, 'bad.tgz');
