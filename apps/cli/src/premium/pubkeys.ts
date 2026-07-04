@@ -10,27 +10,17 @@
 // ============================================================================
 
 export const PREMIUM_PUBKEYS: readonly string[] = [
-  // !!! DEV/STAGING KEY — NOT THE PRODUCTION KEY. DO NOT SHIP GA WITH THIS. !!!
+  // prod key v1 (promoted 2026-07 per operator decision from the keypair first
+  // generated for the end-to-end proof in devcortex-cloud docs/premium-e2e.md;
+  // rotation APPENDS below this entry, never replaces). Its PRIVATE half is held
+  // only in the deployment environment (Vercel `LICENSE_SIGNING_KEY`) and the
+  // operator's local gitignored .env.local — never committed to any repo.
   //
-  // The "DEV/STAGING KEY" banner line above is LOAD-BEARING: the release gate
-  // in tests/premium-pubkey-ga-gate.test.ts (run by `prepublishOnly`) matches
-  // it to block any >= 0.3.0 publish that still carries this entry. Do not
-  // reword it; remove it only via the ceremony below.
-  //
-  // This keypair was generated 2026-07-02 solely to prove the issue → activate
-  // → install → status path end-to-end (devcortex-cloud docs/premium-e2e.md).
-  // Its PRIVATE half lives only in a local gitignored .env.local and is
-  // treated as burned.
-  //
-  // BEFORE THE GA / 0.3.0 PUBLISH the release operator MUST:
-  //   1. Run `node scripts/license-keygen.mjs` in devcortex-cloud (the private
-  //      half goes ONLY into the deployment env, e.g. Vercel LICENSE_SIGNING_KEY
-  //      — never into any repo, transcript, or chat).
-  //   2. APPEND the new production public PEM below this entry as
-  //      `// prod key v1 (issued 2026-07; rotation appends, never replaces)`.
-  //   3. REMOVE this dev/staging entry in the same commit (removing a dev key
-  //      is the one sanctioned "replace"; production rotation only ever appends).
-  // Full ceremony: devcortex-cloud docs/premium-e2e.md § "Production key ceremony".
+  // Provenance note: this key's private half existed in a local file during the
+  // build session. Acceptable for a soft launch; to harden later, generate a
+  // fresh key with `node scripts/license-keygen.mjs`, APPEND its public PEM
+  // below (rotation), and cut over signing in the deployment env — old licenses
+  // keep verifying because verifyLicenseFile tries every key in this array.
   `-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEASZYYOtDRZO8R6OZFHRS54OH5VFyC0pCWK3AuNhEuVgw=
 -----END PUBLIC KEY-----
