@@ -11,3 +11,7 @@ coverage/
 
 # DevCortex runtime caches inside consumer repos / fixtures
 .cortex/cache/
+
+# DevCortex runtime dogfood outputs (regenerated per run)
+.cortex/evidence/
+.cortex/ship-reports/
